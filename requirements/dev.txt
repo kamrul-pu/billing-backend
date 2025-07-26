@@ -1,0 +1,15 @@
+
+dj-database-url
+Django
+django-cleanup
+django-cors-headers
+django-silk
+django-unfold
+djangorestframework
+drf-yasg
+factory_boy
+Faker
+pillow
+psycopg2-binary
+PyJWT
+python-dotenv

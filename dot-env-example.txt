@@ -1,0 +1,9 @@
+SECRET_KEY = django-insecure-&$+dfgwxbu#vv3nxs5t@evzwm(x^6sskq4ux*e@en9&p=*1tp&
+ENABLE_SILK = True
+DEBUG = True
+# For postgresql
+# DATABASE_URL=postgres://dev-user:password@pgdb:5432/dev_db
+# For sqlite3
+DATABASE_URL=sqlite://///home/(db_path)/dev_db.sqlite3(db_name)
+REDIS_SERVER_IP = 
+REDIS_SERVER_PORT = 
