@@ -61,6 +61,7 @@ DJANGO_APPS = [
 PROJECT_APPS = [
     "core",
     "common",
+    "customer",
 ]
 
 THIRD_PARTY_APPS = [
