@@ -13,11 +13,12 @@ from rest_framework.generics import (
     RetrieveUpdateAPIView,
     RetrieveUpdateDestroyAPIView,
 )
-from rest_framework.permissions import (
-    IsAdminUser,
-    IsAuthenticated,
-    AllowAny,
-)
+
+# from rest_framework.permissions import (
+#     # IsAdminUser,
+#     # IsAuthenticated,
+#     # AllowAny,
+# )
 
 from core.token_authentication import JWTAuthentication
 from core.serializers.user import (
@@ -27,18 +28,26 @@ from core.serializers.user import (
     MeSerializer,
     LoginSerializer,
 )
+from core.permissions import (
+    AllowAny,
+    IsAuthenticated,
+    IsAdminUser,
+    IsAdminUserOrReadOnly,
+    IsManager,
+    IsStaff,
+)
 
 User = get_user_model()
 
 
 class UserList(ListCreateAPIView):
-    permission_classes = (IsAdminUser,)
+    permission_classes = (IsAdminUser | IsManager | IsStaff,)
     serializer_class = UserListSerializer
     queryset = User().get_all_actives()
 
 
 class UserDetail(RetrieveUpdateDestroyAPIView):
-    permission_classes = (IsAdminUser,)
+    permission_classes = (IsAdminUser | IsManager,)
     serializer_class = UserDetailSerializer
     queryset = User().get_all_actives()
     lookup_field = "uid"

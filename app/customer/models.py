@@ -41,7 +41,9 @@ class Customer(NameDescriptionBaseModel):
     email = models.EmailField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
 
-    package = models.ForeignKey(Package, on_delete=models.SET_NULL, null=True)
+    package = models.ForeignKey(
+        Package, on_delete=models.SET_NULL, null=True, related_name="packages_customers"
+    )
     connection_start_date = models.DateField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
 
