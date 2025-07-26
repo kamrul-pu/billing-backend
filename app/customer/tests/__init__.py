@@ -14,7 +14,7 @@ class PackageFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Package
 
-    name = factory.Sequence(lambda n: f"Basic Package {n}")
+    name = factory.Iterator(["Basic", "Standard", "Premium", "Ultimate"])
     description = factory.Faker("sentence")
     speed_mbps = factory.Iterator([10, 20, 50, 100])
     price = factory.Iterator([500.0, 750.0, 1000.0, 1500.0])
@@ -27,7 +27,7 @@ class CustomerFactory(factory.django.DjangoModelFactory):
     name = factory.Faker("name")
     description = factory.Faker("sentence")
     user = factory.SubFactory(UserFactory)
-    phone = factory.LazyAttribute(lambda _: fake.phone_number())
+    phone = factory.LazyAttribute(lambda _: fake.unique.phone_number())
     email = factory.LazyAttribute(lambda _: fake.email())
     address = factory.Faker("address")
     package = factory.SubFactory(PackageFactory)
@@ -49,7 +49,7 @@ class PaymentFactory(factory.django.DjangoModelFactory):
     amount = factory.LazyAttribute(lambda o: o.customer.package.price)
     billing_month = factory.Iterator([month[0] for month in Months.choices])
     payment_method = factory.Iterator(
-        [PaymentMethod.CASH, PaymentMethod.BANK, PaymentMethod.BKASH]
+        [PaymentMethod.CASH, PaymentMethod.ONLINE_PAYMENT, PaymentMethod.BKASH]
     )
     paid = factory.Faker("boolean", chance_of_getting_true=80)
     transaction_id = factory.LazyAttribute(lambda _: fake.uuid4())
