@@ -16,6 +16,11 @@ urlpatterns = [
     path("api/v1/users", include("core.urls.user"), name="user-urls"),
     # include package endpoints
     path("api/v1/packages", include("customer.urls.package"), name="package-urls"),
+    # include customer endpoints
+    path("api/v1/customers", include("customer.urls.customer"), name="customer-urls"),
+    # include payment endpoints
+    path("api/v1/payments", include("customer.urls.payment"), name="payment-urls"),
+    # include core endpoints
 ]
 
 if settings.DEBUG:
