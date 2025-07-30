@@ -58,6 +58,12 @@ class Customer(NameDescriptionBaseModel):
         default=ConnectionType.DHCP,
         help_text="Type of connection for the customer.",
     )
+    credentials = models.JSONField(
+        blank=True,
+        null=True,
+        default=dict,
+        help_text="Additional credentials for the customer.",
+    )
 
     def __str__(self):
         return f"{self.name} ({self.phone})"

@@ -41,6 +41,7 @@ class CustomerListSerializer(CustomerBase):
             "username",
             "password",
             "connection_type",
+            "credentials",
         )
         read_only_fields = CustomerBase.Meta.read_only_fields + ()
         write_only_fields = ("first_name", "last_name", "add")
