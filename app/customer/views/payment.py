@@ -1,4 +1,5 @@
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.permissions import SAFE_METHODS
 
 from core.permissions import (
     IsAdminUser,
@@ -16,9 +17,15 @@ from customer.serializers.payment import (
 
 
 class PaymentsList(ListCreateAPIView):
-    # queryset = Payment().get_all_actives()
     serializer_class = PaymentListSerializer
     permission_classes = [IsAdminUser | IsManager | IsStaff]
+
+    def get_permissions(self):
+        if self.request.method in SAFE_METHODS:
+            return [(IsAdminUser | IsManager | IsStaff)()]
+        return [
+            (IsAdminUser | IsManager)()
+        ]  # Only Admin and Manager can create payments
 
     def get_queryset(self):
         queryset = Payment().get_all_actives()
@@ -39,3 +46,10 @@ class PaymentDetail(RetrieveUpdateDestroyAPIView):
     serializer_class = PaymentDetailSerializer
     permission_classes = [IsAdminUser | IsManager | IsStaff]
     lookup_field = "uid"
+
+    def get_permissions(self):
+        if self.request.method in SAFE_METHODS:
+            return [(IsAdminUser | IsManager | IsStaff)()]
+        return [
+            (IsAdminUser | IsManager)()
+        ]  # Only Admin and Manager can modify payments

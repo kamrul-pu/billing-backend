@@ -4,8 +4,7 @@ from rest_framework.generics import (
     RetrieveUpdateDestroyAPIView,
 )
 from rest_framework.response import Response
-
-# from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
+from rest_framework.permissions import SAFE_METHODS
 
 from customer.models import Package, Customer
 from customer.serializers.package import (
@@ -30,12 +29,12 @@ class PackageList(ListCreateAPIView):
 
     queryset = Package().get_all_actives()
     serializer_class = PackageListSerializer
-    # permission_classes = (IsAuthenticated,)
+    permission_classes = [IsAdminUser | IsManager | IsStaff]
 
     def get_permissions(self):
-        if self.request.method in ("GET", "get"):
-            return (AllowAny(),)
-        return [IsAdminUser(), IsManager(), IsStaff()]
+        if self.request.method in SAFE_METHODS:
+            return [AllowAny()]
+        return [(IsAdminUser | IsManager | IsStaff)()]
 
 
 class PackageDetail(RetrieveUpdateDestroyAPIView):
@@ -43,13 +42,13 @@ class PackageDetail(RetrieveUpdateDestroyAPIView):
 
     queryset = Package().get_all_actives()
     serializer_class = PackageDetailSerializer
-    # permission_classes = (IsAdminUser | IsManager | IsStaff,)
+    permission_classes = [IsAdminUser | IsManager | IsStaff]
     lookup_field = "uid"
 
     def get_permissions(self):
-        if self.request.method in ("GET", "HEAD", "OPTIONS"):
+        if self.request.method in SAFE_METHODS:
             return [AllowAny()]
-        return [IsAdminUser(), IsManager(), IsStaff()]
+        return [(IsAdminUser | IsManager | IsStaff)()]
 
 
 class PackageCustomerList(ListAPIView):
