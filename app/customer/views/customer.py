@@ -32,7 +32,7 @@ class CustomerList(ListCreateAPIView):
     #     ]  # Only Admin and Manager can create customers
 
     def get_queryset(self):
-        queryset = Customer().get_all_actives()
+        queryset = Customer().get_all_actives().select_related("package")
         name: str = self.request.query_params.get("name", None)
         user_id: int = self.request.query_params.get("user_id", None)
         phone = self.request.query_params.get("phone", None)
@@ -50,7 +50,7 @@ class CustomerList(ListCreateAPIView):
 
 
 class CustomerDetail(RetrieveUpdateDestroyAPIView):
-    queryset = Customer().get_all_actives()
+    queryset = Customer().get_all_actives().select_related("package", "user")
     serializer_class = CustomerDetailSerializer
     permission_classes = [IsAdminUser | IsManager | IsStaff]
     lookup_field = "uid"
@@ -67,12 +67,17 @@ class CustomerPaymentsList(ListCreateAPIView):
     serializer_class = PaymentListSerializer
     permission_classes = [IsAdminUser | IsManager | IsStaff]
 
-    def get_permissions(self):
-        if self.request.method in SAFE_METHODS:
-            return [(IsAdminUser | IsManager | IsStaff)()]
-        return [
-            (IsAdminUser | IsManager)()
-        ]  # Only Admin and Manager can create payments
+    # def get_permissions(self):
+    #     if self.request.method in SAFE_METHODS:
+    #         return [(IsAdminUser | IsManager | IsStaff)()]
+    #     return [
+    #         (IsAdminUser | IsManager)()
+    #     ]  # Only Admin and Manager can create payments
 
     def get_queryset(self):
-        return Payment().get_all_actives().filter(customer__uid=self.kwargs["uid"])
+        return (
+            Payment()
+            .get_all_actives()
+            .filter(customer__uid=self.kwargs["uid"])
+            .select_related("customer", "entry_by")
+        )

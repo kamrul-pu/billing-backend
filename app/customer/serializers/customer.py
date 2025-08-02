@@ -1,9 +1,13 @@
+from django.db import transaction
+
 from rest_framework import serializers
 
-from customer.models import Customer
+from customer.models import Customer, Package
 
 from core.serializers.user import UserListSerializer
 from core.models import User
+
+from customer.serializers.package import PackageBase
 
 
 class CustomerBase(serializers.ModelSerializer):
@@ -11,16 +15,7 @@ class CustomerBase(serializers.ModelSerializer):
 
     class Meta:
         model = Customer
-        fields = (
-            "id",
-            "uid",
-            "name",
-            "email",
-            "phone",
-            "address",
-            "nid",
-            "package",
-        )
+        fields = ("id", "uid", "name", "email", "phone", "address", "nid")
         read_only_fields = (
             "id",
             "uid",
@@ -30,11 +25,13 @@ class CustomerBase(serializers.ModelSerializer):
 class CustomerListSerializer(CustomerBase):
     """Serializer for listing customers."""
 
-    package_name = serializers.CharField(source="package.name", read_only=True)
+    package = PackageBase(read_only=True)
+    package_id = serializers.IntegerField(write_only=True, required=False)
 
     class Meta(CustomerBase.Meta):
         fields = CustomerBase.Meta.fields + (
-            "package_name",
+            "package",
+            "package_id",
             "connection_start_date",
             "is_active",
             "ip_address",
@@ -47,8 +44,18 @@ class CustomerListSerializer(CustomerBase):
         read_only_fields = CustomerBase.Meta.read_only_fields + ()
         write_only_fields = ("first_name", "last_name", "add")
 
+    @transaction.atomic
     def create(self, validated_data):
         phone = validated_data.get("phone")
+        email = validated_data.get("email", None)
+        # Check if the phone number is already in use
+        if email and (
+            Customer.objects.filter(email=email).exists()
+            or User.objects.filter(email=email).exists()
+        ):
+            raise serializers.ValidationError(
+                {"email": "This email is already in use."}
+            )
         if Customer.objects.filter(phone=phone).exists():
             raise serializers.ValidationError(
                 {"phone": "This phone number is already in use."}
@@ -71,17 +78,19 @@ class CustomerListSerializer(CustomerBase):
             password="123456",  # Default password, can be changed later
         )
         validated_data["user_id"] = user.id
-        return super().create(validated_data)
+        return Customer.objects.create(**validated_data)
 
 
 class CustomerDetailSerializer(CustomerBase):
     """Serializer for customer details."""
 
     user = UserListSerializer(read_only=True)
+    package = PackageBase()
 
     class Meta(CustomerBase.Meta):
         fields = CustomerBase.Meta.fields + (
             "user",
+            "package",
             "connection_start_date",
             "is_active",
             "ip_address",

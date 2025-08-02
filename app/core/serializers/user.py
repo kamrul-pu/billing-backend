@@ -10,6 +10,15 @@ from rest_framework.exceptions import APIException
 User = get_user_model()
 
 
+class UserLiteSerializer(serializers.ModelSerializer):
+    """A lightweight serializer for user model, used for listing users."""
+
+    class Meta:
+        model = User
+        fields = ("id", "uid", "first_name", "last_name", "phone", "email")
+        read_only_fields = ("id", "uid")
+
+
 class UserListSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

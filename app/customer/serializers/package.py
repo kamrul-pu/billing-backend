@@ -2,8 +2,6 @@ from rest_framework import serializers
 
 from customer.models import Package
 
-from customer.serializers.customer import CustomerListSerializer
-
 
 class PackageBase(serializers.ModelSerializer):
     """Base serializer for Package model."""
@@ -45,8 +43,6 @@ class PackageDetailSerializer(PackageBase):
 
 class PackageCustomerSerializer(serializers.ModelSerializer):
     """Serializer for listing customers of a package."""
-
-    customers = CustomerListSerializer(many=True, read_only=True)
 
     class Meta:
         model = Package
