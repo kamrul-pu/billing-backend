@@ -40,6 +40,9 @@ class Customer(NameDescriptionBaseModel):
     phone = models.CharField(max_length=20, unique=True)
     email = models.EmailField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
+    nid = models.CharField(
+        max_length=20, blank=True, help_text="National ID number of the customer."
+    )
 
     package = models.ForeignKey(
         Package, on_delete=models.SET_NULL, null=True, related_name="packages_customers"
@@ -74,7 +77,7 @@ class Customer(NameDescriptionBaseModel):
         ordering = ["-created_at"]
 
 
-class Payment(BaseModelWithUID):
+class Payment(NameDescriptionBaseModel):
     """Model representing a payment."""
 
     customer = models.ForeignKey(

@@ -14,17 +14,17 @@ admin.site.register(Package, PackageAdmin)
 
 
 class CustomerAdmin(ModelAdmin):
-    list_display = ("id", "name", "phone", "connection_type", "is_active")
-    search_fields = ("name", "phone")
+    list_display = ("id", "name", "phone", "nid", "connection_type", "is_active")
+    search_fields = ("name", "phone", "nid")
 
 
 admin.site.register(Customer, CustomerAdmin)
 
 
 class PaymentAdmin(ModelAdmin):
-    list_display = ("id", "amount", "billing_month", "paid", "payment_date")
-    search_fields = ("customer__name", "amount", "billing_month")
-    list_filter = ("paid", "billing_month")
+    list_display = ("id", "customer", "amount", "billing_month", "entry_by", "paid", "payment_date")
+    search_fields = ("customer__name", "amount", "billing_month", "entry_by__first_name")
+    list_filter = ("paid", "billing_month", "entry_by")
 
 
 admin.site.register(Payment, PaymentAdmin)

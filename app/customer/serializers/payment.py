@@ -10,6 +10,7 @@ class PaymentBase(serializers.ModelSerializer):
         fields = (
             "id",
             "customer",
+            "entry_by",
             "amount",
             "billing_month",
             "payment_method",
@@ -23,15 +24,17 @@ class PaymentBase(serializers.ModelSerializer):
 
 class PaymentListSerializer(PaymentBase):
     customer_name = serializers.CharField(source="customer.name", read_only=True)
+    collected_by_name = serializers.CharField(source="entry_by.get_full_name", read_only=True)
 
     class Meta(PaymentBase.Meta):
-        fields = PaymentBase.Meta.fields + ("customer_name",)
+        fields = PaymentBase.Meta.fields + ("customer_name", "collected_by_name")
 
     def create(self, validated_data):
         transaction_id = uuid.uuid4()
         payment_date = validated_data.get("payment_date", timezone.now())
         validated_data["payment_date"] = payment_date
         validated_data["transaction_id"] = str(transaction_id)
+        validated_data["entry_by"] = self.context["request"].user
         validated_data["note"] = (
             "Payment received by "
             + self.context["request"].user.first_name
@@ -43,7 +46,8 @@ class PaymentListSerializer(PaymentBase):
 
 class PaymentDetailSerializer(PaymentBase):
     customer_name = serializers.CharField(source="customer.name", read_only=True)
+    collected_by_name = serializers.CharField(source="entry_by.get_full_name", read_only=True)
 
     class Meta(PaymentBase.Meta):
-        fields = PaymentBase.Meta.fields + ("customer_name",)
-        read_only_fields = PaymentBase.Meta.read_only_fields + ("customer_name",)
+        fields = PaymentBase.Meta.fields + ("customer_name", "collected_by_name")
+        read_only_fields = PaymentBase.Meta.read_only_fields + ("customer_name", "collected_by_name")

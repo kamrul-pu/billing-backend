@@ -30,6 +30,9 @@ class CustomerFactory(factory.django.DjangoModelFactory):
     phone = factory.LazyAttribute(lambda _: fake.unique.phone_number())
     email = factory.LazyAttribute(lambda _: fake.email())
     address = factory.Faker("address")
+    nid = factory.LazyAttribute(
+        lambda _: fake.unique.random_number(digits=10, fix_len=True)
+    )
     package = factory.SubFactory(PackageFactory)
     connection_start_date = factory.LazyFunction(timezone.now)
     is_active = True
@@ -46,6 +49,7 @@ class PaymentFactory(factory.django.DjangoModelFactory):
         model = Payment
 
     customer = factory.SubFactory(CustomerFactory)
+    entry_by = factory.Iterator(User().get_all_actives())
     amount = factory.LazyAttribute(lambda o: o.customer.package.price)
     billing_month = factory.Iterator([month[0] for month in Months.choices])
     payment_method = factory.Iterator(

@@ -18,6 +18,7 @@ class CustomerBase(serializers.ModelSerializer):
             "email",
             "phone",
             "address",
+            "nid",
             "package",
         )
         read_only_fields = (

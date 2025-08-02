@@ -1,6 +1,7 @@
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import SAFE_METHODS
 
+# from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 
 from core.permissions import (
     IsAdminUser,
@@ -23,12 +24,12 @@ class CustomerList(ListCreateAPIView):
     serializer_class = CustomerListSerializer
     permission_classes = [IsAdminUser | IsManager | IsStaff]
 
-    def get_permissions(self):
-        if self.request.method in SAFE_METHODS:
-            return [(IsAdminUser | IsManager | IsStaff)()]
-        return [
-            (IsAdminUser | IsManager)()
-        ]  # Only Admin and Manager can create customers
+    # def get_permissions(self):
+    #     if self.request.method in SAFE_METHODS:
+    #         return [(IsAdminUser | IsManager | IsStaff)()]
+    #     return [
+    #         (IsAdminUser | IsManager)()
+    #     ]  # Only Admin and Manager can create customers
 
     def get_queryset(self):
         queryset = Customer().get_all_actives()
