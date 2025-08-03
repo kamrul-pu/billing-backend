@@ -32,6 +32,9 @@ class PaymentsList(ListCreateAPIView):
         customer_name = self.request.query_params.get("customer_name", None)
         customer_phone = self.request.query_params.get("customer_phone", None)
         collected_by = self.request.query_params.get("collected_by", None)
+        month = self.request.query_params.get("month", None)
+        if month:
+            queryset = queryset.filter(billing_month=month)
         if collected_by:
             queryset = queryset.filter(entry_by__first_name__icontains=collected_by)
         if customer_phone:

@@ -85,12 +85,14 @@ class CustomerDetailSerializer(CustomerBase):
     """Serializer for customer details."""
 
     user = UserListSerializer(read_only=True)
-    package = PackageBase()
+    package = PackageBase(read_only=True)
+    package_id = serializers.IntegerField(write_only=True, required=False)
 
     class Meta(CustomerBase.Meta):
         fields = CustomerBase.Meta.fields + (
             "user",
             "package",
+            "package_id",
             "connection_start_date",
             "is_active",
             "ip_address",

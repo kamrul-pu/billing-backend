@@ -1,5 +1,11 @@
+from django.utils import timezone
+
+
+from rest_framework.views import APIView
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import SAFE_METHODS
+from rest_framework.response import Response
+
 
 # from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 
@@ -80,4 +86,56 @@ class CustomerPaymentsList(ListCreateAPIView):
             .get_all_actives()
             .filter(customer__uid=self.kwargs["uid"])
             .select_related("customer", "entry_by")
+        )
+
+
+class GenerateBill(APIView):
+    """
+    Placeholder for GenerateBill API view.
+    This can be implemented later as per requirements.
+    """
+
+    def post(self, request, *args, **kwargs):
+        month = request.query_params.get("month", timezone.now().strftime("%B").upper())
+        print(" Month:", month)
+
+        # Step 1: Get all active customers
+        active_customers = Customer.objects.filter(is_active=True).select_related(
+            "package"
+        )
+
+        # Step 2: Get customer IDs with existing payments for current month
+        existing_payments = Payment.objects.filter(billing_month=month)
+        paid_customer_ids = set(existing_payments.values_list("customer_id", flat=True))
+
+        # Step 3: Filter customers who haven't been billed
+        customers_to_bill = [
+            c for c in active_customers if c.id not in paid_customer_ids
+        ]
+
+        # Step 4: Create payment records in bulk
+        payments_to_create = []
+        for customer in customers_to_bill:
+            bill_amount = customer.package.price if customer.package else 0.0
+            payments_to_create.append(
+                Payment(
+                    customer=customer,
+                    bill_amount=bill_amount,
+                    amount=0.0,
+                    billing_month=month,
+                    payment_method="OTHER",
+                    paid=False,
+                    note=f"Auto-generated bill for {month}",
+                )
+            )
+
+        # Bulk create payments
+        Payment.objects.bulk_create(payments_to_create)
+
+        return Response(
+            {
+                "message": f"Billing for {month} processed.",
+                "created_payments_count": len(payments_to_create),
+                # "payments": payments_to_create,
+            }
         )

@@ -83,6 +83,12 @@ class Payment(NameDescriptionBaseModel):
     customer = models.ForeignKey(
         Customer, on_delete=models.CASCADE, related_name="payments"
     )
+    bill_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0.0,
+        help_text="Total bill amount for the payment.",
+    )
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     billing_month = models.CharField(
         max_length=32,
