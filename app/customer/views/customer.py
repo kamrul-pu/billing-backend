@@ -95,6 +95,8 @@ class GenerateBill(APIView):
     This can be implemented later as per requirements.
     """
 
+    permission_classes = [IsAdminUser | IsManager]
+
     def post(self, request, *args, **kwargs):
         month = request.query_params.get("month", timezone.now().strftime("%B").upper())
         print(" Month:", month)

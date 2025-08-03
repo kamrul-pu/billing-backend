@@ -50,12 +50,13 @@ class PaymentsList(ListCreateAPIView):
 class PaymentDetail(RetrieveUpdateDestroyAPIView):
     queryset = Payment().get_all_actives().select_related("customer", "entry_by")
     serializer_class = PaymentDetailSerializer
-    permission_classes = [IsAdminUser | IsManager | IsStaff]
+    permission_classes = []  # Leave empty; we override with `get_permissions`
     lookup_field = "uid"
 
-    # def get_permissions(self):
-    #     if self.request.method in SAFE_METHODS:
-    #         return [(IsAdminUser | IsManager | IsStaff)()]
-    #     return [
-    #         (IsAdminUser | IsManager)()
-    #     ]  # Only Admin and Manager can modify payments
+    def get_permissions(self):
+        # Only Admin, Manager, or SuperAdmin can DELETE
+        if self.request.method == "DELETE":
+            return [IsAdminUser() or IsManager()]
+
+        # Admin, Manager, or Staff can view or update
+        return [IsAdminUser() or IsManager() or IsStaff()]
