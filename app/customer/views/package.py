@@ -48,7 +48,9 @@ class PackageDetail(RetrieveUpdateDestroyAPIView):
     def get_permissions(self):
         if self.request.method in SAFE_METHODS:
             return [AllowAny()]
-        return [(IsAdminUser | IsManager | IsStaff)()]
+        elif self.request.method in ["PUT", "PATCH", "DELETE"]:
+            return [IsAdminUser()]
+        return [(IsAdminUser | IsManager)()]
 
 
 class PackageCustomerList(ListAPIView):
