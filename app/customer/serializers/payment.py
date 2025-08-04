@@ -122,5 +122,7 @@ class PaymentDetailSerializer(PaymentBase):
         )
 
     def update(self, instance, validated_data):
+        if not instance.entry_by:
+            validated_data["entry_by_id"] = self.context["request"].user.id
         validated_data["updated_by_id"] = self.context["request"].user.id
         return super().update(instance, validated_data)
