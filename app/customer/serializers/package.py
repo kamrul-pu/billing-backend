@@ -29,6 +29,10 @@ class PackageListSerializer(PackageBase):
         fields = PackageBase.Meta.fields + ()
         read_only_fields = PackageBase.Meta.read_only_fields + ()
 
+    def create(self, validated_data):
+        validated_data["created_by_id"] = self.context["request"].user.id
+        return super().create(validated_data)
+
 
 class PackageDetailSerializer(PackageBase):
     """Serializer for package details."""
@@ -48,3 +52,7 @@ class PackageCustomerSerializer(serializers.ModelSerializer):
         model = Package
         fields = ("id", "uid", "name", "customers")
         read_only_fields = ("id", "uid", "name", "customers")
+
+    def update(self, instance, validated_data):
+        validated_data["updated_by_id"] = self.context["request"].user.id
+        return super().update(instance, validated_data)

@@ -78,6 +78,8 @@ class CustomerListSerializer(CustomerBase):
             password="123456",  # Default password, can be changed later
         )
         validated_data["user_id"] = user.id
+        validated_data["entry_by_id"] = self.context["request"].user.id
+        validated_data["update_by_id"] = self.context["request"].user.id
         return Customer.objects.create(**validated_data)
 
 
@@ -106,3 +108,7 @@ class CustomerDetailSerializer(CustomerBase):
             "connection_start_date",
             "is_active",
         )
+
+    def update(self, instance, validated_data):
+        validated_data["update_by_id"] = self.context["request"].user.id
+        return super().update(instance, validated_data)

@@ -97,7 +97,13 @@ class PaymentListSerializer(PaymentBase):
                 ]
             )
             return payment
-
+        validated_data["bill_amount"] = (
+            customer.package.price if customer.package else 0.0
+        )
+        if validated_data.get("amount", 0.0) == validated_data["bill_amount"]:
+            validated_data["paid"] = True
+        else:
+            validated_data["paid"] = validated_data.get("paid", False)
         validated_data["payment_date"] = payment_date
         validated_data["transaction_id"] = str(transaction_id)
         validated_data["entry_by_id"] = self.context["request"].user.id
@@ -122,6 +128,10 @@ class PaymentDetailSerializer(PaymentBase):
         )
 
     def update(self, instance, validated_data):
+        if validated_data.get("bill_amount", 0.0) == validated_data.get("amount", 0.0):
+            validated_data["paid"] = True
+        else:
+            validated_data["paid"] = validated_data.get("paid", False)
         if not instance.entry_by:
             validated_data["entry_by_id"] = self.context["request"].user.id
         validated_data["updated_by_id"] = self.context["request"].user.id
