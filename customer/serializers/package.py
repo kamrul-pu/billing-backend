@@ -30,7 +30,7 @@ class PackageListSerializer(PackageBase):
         read_only_fields = PackageBase.Meta.read_only_fields + ()
 
     def create(self, validated_data):
-        validated_data["created_by_id"] = self.context["request"].user.id
+        validated_data["entry_by_id"] = self.context["request"].user.id
         return super().create(validated_data)
 
 
