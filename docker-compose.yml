@@ -1,21 +1,21 @@
 services:
-  db:
-    image: postgres:17
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    environment:
-      - DB_HOST=db
-      - DB_NAME=devdb
-      - DB_USER=devuser
-      - DB_PASS=changeme
+  # db:
+  #   image: postgres:17
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   environment:
+  #     - DB_HOST=db
+  #     - DB_NAME=devdb
+  #     - DB_USER=devuser
+  #     - DB_PASS=changeme
 
   django-web:
     build: .
     container_name: django-docker
-    depends_on:
-      - db
+    # depends_on:
+    #   - db
     volumes:
       - ./static:/app/staticfiles
     env_file:
@@ -30,5 +30,5 @@ services:
       - ./static:/static:ro
     depends_on:
       - django-web
-volumes:
-  postgres_data:
+# volumes:
+#   postgres_data:

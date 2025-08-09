@@ -79,7 +79,7 @@ class CustomerListSerializer(CustomerBase):
         # )
         # validated_data["user_id"] = user.id
         validated_data["entry_by_id"] = self.context["request"].user.id
-        validated_data["update_by_id"] = self.context["request"].user.id
+        validated_data["updated_by_id"] = self.context["request"].user.id
         return Customer.objects.create(**validated_data)
 
 
