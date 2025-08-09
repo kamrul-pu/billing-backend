@@ -8,7 +8,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         with transaction.atomic():
-            customers = Customer.objects.filter().select_related("package")
+            customers = (
+                Customer.objects.filter()
+                .select_related("package")
+                .prefetch_related("payments")
+            )
             if not customers:
                 self.stdout.write(self.style.WARNING("No customers found."))
                 return
