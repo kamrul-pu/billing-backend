@@ -1,9 +1,27 @@
 SECRET_KEY = django-insecure-&$+dfgwxbu#vv3nxs5t@evzwm(x^6sskq4ux*e@en9&p=*1tp&
-ENABLE_SILK = True
-DEBUG = True
+ENABLE_SILK = False
+DEBUG = False
+
+DJANGO_ALLOWED_HOSTS=localhost
+DJANGO_CSRF_TRUSTED_ORIGINS=http://localhost:8000
 # For postgresql
 # DATABASE_URL=postgres://dev-user:password@pgdb:5432/dev_db
+DATABASE_URL = "postgresql://neondb_owner:npg_jXOm4ex0cKds@ep-weathered-heart-a1772xoj-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+
 # For sqlite3
-DATABASE_URL=sqlite://///home/(db_path)/dev_db.sqlite3(db_name)
+# DATABASE_URL=sqlite://///home/(db_path)/dev_db.sqlite3(db_name)
 REDIS_SERVER_IP = 
 REDIS_SERVER_PORT = 
+
+# # Database Settings
+# DATABASE_ENGINE=postgresql_psycopg2
+# DATABASE_NAME=devdb
+# DATABASE_USERNAME=devuser
+# DATABASE_PASSWORD=changeme
+# DATABASE_HOST=db
+# DATABASE_PORT=5432
+
+# # Postgres Settings
+# POSTGRES_DB=dockerdjango
+# POSTGRES_USER=dbuser
+# POSTGRES_PASSWORD=dbpassword

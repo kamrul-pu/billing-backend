@@ -1,34 +1,50 @@
-FROM python:3.13-alpine3.13
-LABEL maintainer="kamrul192"
-
-ENV PYTHONUNBUFFERED 1
-COPY ./requirements.txt /tmp/requirements.txt
-COPY ./requirements.dev.txt /tmp/requirements.dev.txt
-
-COPY ./app /app
+# Stage 1: Base build stage
+FROM python:3.13-slim AS builder
+ 
+# Create the app directory
+RUN mkdir /app
+ 
+# Set the working directory
 WORKDIR /app
-EXPOSE 8000
+ 
+# Set environment variables to optimize Python
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1 
+ 
+# Install dependencies first for caching benefit
+RUN pip install --upgrade pip 
+COPY requirements/dev.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+ 
+# Stage 2: Production stage
+FROM python:3.13-slim
+ 
+RUN useradd -m -r appuser && \
+   mkdir /app && \
+   chown -R appuser /app
+ 
+# Copy the Python dependencies from the builder stage
+COPY --from=builder /usr/local/lib/python3.13/site-packages/ /usr/local/lib/python3.13/site-packages/
+COPY --from=builder /usr/local/bin/ /usr/local/bin/
+ 
+# Set the working directory
+WORKDIR /app
+ 
+# Copy application code
+COPY --chown=appuser:appuser . .
+ 
+# Set environment variables to optimize Python
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1 
+ 
+# Switch to non-root user
+USER appuser
+ 
+# Expose the application port
+EXPOSE 8000 
 
-ARG DEV=false
-RUN python -m venv /py && \
-    /py/bin/pip install --upgrade pip && \
-    apk add --update --no-cache postgresql-client jpeg-dev && \
-    apk add --update --no-cache --virtual .tmp-build-deps \
-    build-base postgresql-dev musl-dev zlib zlib-dev && \
-    /py/bin/pip install -r /tmp/requirements.txt && \
-    if [ $DEV = "true" ]; \
-    then /py/bin/pip install -r /tmp/requirements.dev.txt ; \
-    fi && \
-    rm -rf /tmp && \
-    apk del .tmp-build-deps && \
-    adduser \
-    --disabled-password \
-    --no-create-home \
-    django-user && \
-    mkdir -p /vol/web/media && \
-    mkdir -p /vol/web/static && \
-    chown -R django-user:django-user /vol && \
-    chmod -R 755 /vol
-ENV PATH="/py/bin:$PATH"
-
-USER django-user
+# Make entry file executable
+RUN chmod +x  /app/entrypoint.prod.sh
+ 
+# Start the application using Gunicorn
+CMD ["/app/entrypoint.prod.sh"]
