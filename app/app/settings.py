@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 import dj_database_url
 
 
-load_dotenv()
+load_dotenv(".env")
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 # The root of the git repo - Could be ~/project or ~/repo
@@ -174,8 +174,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_ROOT = STATIC_DIR
+# STATIC_ROOT = STATIC_DIR
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_ROOT = MEDIA_DIR
 MEDIA_URL = "/media/"

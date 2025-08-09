@@ -9,6 +9,7 @@ djangorestframework
 drf-yasg
 factory_boy
 Faker
+gunicorn
 pillow
 psycopg2-binary
 PyJWT
