@@ -44,7 +44,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "")
 DEBUG = os.environ.get("DEBUG", False)
 ENABLE_SILK = os.environ.get("ENABLE_SILK", False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -232,4 +232,13 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+]
+
+# CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://localhost(:[0-9]+)?$",
+    r"^http://127\\.0\\.0\\.1(:[0-9]+)?$",
+    r"^http://192\\.168\\.[0-9]+\\.[0-9]+(:[0-9]+)?$",
+    r"^http://10\\.[0-9]+\\.[0-9]+\\.[0-9]+(:[0-9]+)?$",
 ]

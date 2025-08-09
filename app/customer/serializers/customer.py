@@ -61,23 +61,23 @@ class CustomerListSerializer(CustomerBase):
                 {"phone": "This phone number is already in use."}
             )
         # Create an user object for this customer for future use
-        user = User.objects.filter(phone=phone).first()
-        if user:
-            raise serializers.ValidationError(
-                {"phone": "This phone number is already associated with a user."}
-            )
-        name = validated_data.get("name", "")
-        name = name.split(" ")
-        first_name = name[0]
-        last_name = name[1] if len(name) > 1 else ""
-        user = User.objects.create_user(
-            phone=validated_data.get("phone"),
-            first_name=first_name,
-            last_name=last_name,
-            email=validated_data.get("email", None),
-            password="123456",  # Default password, can be changed later
-        )
-        validated_data["user_id"] = user.id
+        # user = User.objects.filter(phone=phone).first()
+        # if user:
+        #     raise serializers.ValidationError(
+        #         {"phone": "This phone number is already associated with a user."}
+        #     )
+        # name = validated_data.get("name", "")
+        # name = name.split(" ")
+        # first_name = name[0]
+        # last_name = name[1] if len(name) > 1 else ""
+        # user = User.objects.create_user(
+        #     phone=validated_data.get("phone"),
+        #     first_name=first_name,
+        #     last_name=last_name,
+        #     email=validated_data.get("email", None),
+        #     password="123456",  # Default password, can be changed later
+        # )
+        # validated_data["user_id"] = user.id
         validated_data["entry_by_id"] = self.context["request"].user.id
         validated_data["update_by_id"] = self.context["request"].user.id
         return Customer.objects.create(**validated_data)
