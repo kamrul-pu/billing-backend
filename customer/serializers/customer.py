@@ -106,7 +106,7 @@ class CustomerDetailSerializer(CustomerBase):
         read_only_fields = CustomerBase.Meta.read_only_fields + (
             "user",
             "connection_start_date",
-            "is_active",
+            # "is_active",
         )
 
     def update(self, instance, validated_data):
