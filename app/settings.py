@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 import dj_database_url
 
 
-load_dotenv()
+load_dotenv(".env")
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 # The root of the git repo - Could be ~/project or ~/repo
@@ -41,11 +41,15 @@ MEDIA_DIR = os.path.realpath(os.path.join(HOME_DIR, "media"))
 SECRET_KEY = os.environ.get("SECRET_KEY", "")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEBUG", False)
+DEBUG = bool(os.environ.get("DEBUG", False))
+# print(f"DEBUG: {DEBUG}")
 
 ENABLE_SILK = os.environ.get("ENABLE_SILK", False)
 
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "*").split(",")
+# ALLOWED_HOSTS = os.environ.get(
+#     "DJANGO_ALLOWED_HOSTS", "billing-backend-0ufp.onrender.com"
+# ).split(",")
+ALLOWED_HOSTS = ["billing-backend-0ufp.onrender.com"]
 
 # CSRF_TRUSTED_ORIGINS = os.getenv(
 #     "DJANGO_CSRF_TRUSTED_ORIGINS", "https://127.0.0.1"
