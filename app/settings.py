@@ -41,8 +41,9 @@ MEDIA_DIR = os.path.realpath(os.path.join(HOME_DIR, "media"))
 SECRET_KEY = os.environ.get("SECRET_KEY", "")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool(os.environ.get("DEBUG", False))
+# DEBUG = bool(os.environ.get("DEBUG", False))
 # print(f"DEBUG: {DEBUG}")
+DEBUG = False
 
 ENABLE_SILK = os.environ.get("ENABLE_SILK", False)
 
