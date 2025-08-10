@@ -41,16 +41,15 @@ MEDIA_DIR = os.path.realpath(os.path.join(HOME_DIR, "media"))
 SECRET_KEY = os.environ.get("SECRET_KEY", "")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# DEBUG = os.environ.get("DEBUG", False)
-DEBUG = False
+DEBUG = os.environ.get("DEBUG", False)
+
 ENABLE_SILK = os.environ.get("ENABLE_SILK", False)
-ENABLE_SILK = False
 
 ALLOWED_HOSTS = ["*"]
 
-CSRF_TRUSTED_ORIGINS = os.getenv(
-    "DJANGO_CSRF_TRUSTED_ORIGINS", "https://127.0.0.1"
-).split(",")
+# CSRF_TRUSTED_ORIGINS = os.getenv(
+#     "DJANGO_CSRF_TRUSTED_ORIGINS", "https://127.0.0.1"
+# ).split(",")
 
 
 # Application definition
@@ -230,7 +229,7 @@ REST_FRAMEWORK = {
     # "DEFAULT_FILTER_BACKENDS": ("django_filters.rest_framework.DjangoFilterBackend",),
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
-        "rest_framework.renderers.BrowsableAPIRenderer",
+        # "rest_framework.renderers.BrowsableAPIRenderer",
     ],
     # "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_THROTTLE_RATES": {"anon": "300/minute", "user": "1200/minute"},
@@ -239,17 +238,22 @@ REST_FRAMEWORK = {
 }
 
 
+# Cors Allowed Origins
+CORS_ALLOWED_ORIGINS = os.environ.get(
+    "CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
+).split(",")
+
 # Cors alowed origin
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",
+#     "http://127.0.0.1:3000",
+# ]
 
 # CORS_ALLOW_ALL_ORIGINS = True
 
-CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^http://localhost(:[0-9]+)?$",
-    r"^http://127\\.0\\.0\\.1(:[0-9]+)?$",
-    r"^http://192\\.168\\.[0-9]+\\.[0-9]+(:[0-9]+)?$",
-    r"^http://10\\.[0-9]+\\.[0-9]+\\.[0-9]+(:[0-9]+)?$",
-]
+# CORS_ALLOWED_ORIGIN_REGEXES = [
+#     r"^http://localhost(:[0-9]+)?$",
+#     r"^http://127\\.0\\.0\\.1(:[0-9]+)?$",
+#     r"^http://192\\.168\\.[0-9]+\\.[0-9]+(:[0-9]+)?$",
+#     r"^http://10\\.[0-9]+\\.[0-9]+\\.[0-9]+(:[0-9]+)?$",
+# ]
