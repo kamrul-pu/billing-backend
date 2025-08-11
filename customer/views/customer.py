@@ -42,9 +42,15 @@ class CustomerList(ListCreateAPIView):
     def get_queryset(self):
         queryset = Customer().get_all_actives().select_related("package")
         name: str = self.request.query_params.get("name", None)
+        username: str = self.request.query_params.get("username", None)
         user_id: int = self.request.query_params.get("user_id", None)
-        phone = self.request.query_params.get("phone", None)
+        phone: str = self.request.query_params.get("phone", None)
         package_id = self.request.query_params.get("package_id", None)
+        is_active: bool = self.request.query_params.get("is_active", None)
+        if username:
+            queryset = queryset.filter(username=username)
+        if is_active:
+            queryset = queryset.filter(is_active=is_active.lower() == "true")
         if name:
             queryset = queryset.filter(name__icontains=name)
         if user_id:

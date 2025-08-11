@@ -1,7 +1,10 @@
 """Customer models for the application."""
 
 from django.db import models
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 
+from customer.utils import toggle_ppp_user
 from common.models import NameDescriptionBaseModel, BaseModelWithUID
 from customer.choices import ConnectionType, PaymentMethod, Months
 
@@ -125,3 +128,15 @@ class Payment(NameDescriptionBaseModel):
         verbose_name = "Payment"
         verbose_name_plural = "Payments"
         ordering = ["-created_at"]
+
+
+@receiver(pre_save, sender=Customer)
+def customer_status_toggle(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            old_instance = sender.objects.get(pk=instance.pk)
+            if old_instance.is_active != instance.is_active:
+                print("Signal: Toggling user status in MikroTik")
+                toggle_ppp_user(instance.username, not instance.is_active)
+        except sender.DoesNotExist:
+            pass  #

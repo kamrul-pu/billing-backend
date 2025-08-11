@@ -57,6 +57,11 @@ ALLOWED_HOSTS = ["*"]
 #     "DJANGO_CSRF_TRUSTED_ORIGINS", "https://127.0.0.1"
 # ).split(",")
 
+MIKROTIK_URL = os.environ.get(
+    "MIKROTIK_URL", "http://103.146.16.148"
+)  # Use http:// or https://
+MIKROTIK_USER = os.environ.get("MIKROTIK_USER", "kamrul")
+MIKROTIK_PASS = os.environ.get("MIKROTIK_PASS", "kamrul#2025")
 
 # Application definition
 
@@ -138,7 +143,7 @@ WSGI_APPLICATION = "app.wsgi.application"
 #     "DATABASE_URL", "postgres://dev_user:changeme@db:5432/dev_db"
 # )
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
-
+print("Database url: ", DATABASE_URL)
 DATABASES = {
     "default": dj_database_url.config(
         default=DATABASE_URL,

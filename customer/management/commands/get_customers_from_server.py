@@ -51,9 +51,10 @@ class Command(BaseCommand):
         db_customers_set = {customer.username: customer for customer in db_customers}
         customers_to_create = []
         for i in range(len(users)):
+            # print("customer secert_id", users[i].get(".id", ""))
             username = users[i].get("name", "")
             if username in db_customers_set:
-                print("customer already exists in db: ", username)
+                # print("customer already exists in db: ", username)
                 continue
             name = ""
             if username:

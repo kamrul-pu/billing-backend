@@ -9,6 +9,8 @@ from core.models import User
 
 from customer.serializers.package import PackageBase
 
+# from customer.utils import toggle_ppp_user
+
 
 class CustomerBase(serializers.ModelSerializer):
     """Base serializer for Customer model."""
@@ -111,4 +113,11 @@ class CustomerDetailSerializer(CustomerBase):
 
     def update(self, instance, validated_data):
         validated_data["update_by_id"] = self.context["request"].user.id
+        # is_active = validated_data.get("is_active", None)
+        # if instance.is_active != is_active:
+        #     # Need to toggle the user status in MikroTik
+        #     print("Need to toggle the user status in MikroTik")
+        #     toggle_ppp_user(instance.username, not is_active)
+        # else:
+        #     print("No need to toggle the user status in MikroTik")
         return super().update(instance, validated_data)
