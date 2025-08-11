@@ -121,3 +121,10 @@ class CustomerDetailSerializer(CustomerBase):
         # else:
         #     print("No need to toggle the user status in MikroTik")
         return super().update(instance, validated_data)
+
+
+class StatusToggleSerializer(serializers.Serializer):
+    """Serializer for toggling customer status."""
+
+    username = serializers.CharField(required=True, max_length=150)
+    is_active = serializers.BooleanField(required=True)

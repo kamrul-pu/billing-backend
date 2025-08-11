@@ -23,9 +23,10 @@ from customer.models import Customer, Payment, Package
 from customer.serializers.customer import (
     CustomerListSerializer,
     CustomerDetailSerializer,
+    StatusToggleSerializer,
 )
 from customer.serializers.payment import PaymentListSerializer
-from customer.serializers.payment import PaymentListSerializer
+from customer.utils import toggle_ppp_user
 
 
 class CustomerList(ListCreateAPIView):
@@ -210,3 +211,34 @@ class Dashboard(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class StatusToggle(APIView):
+    """
+    API to toggle the status of a customer.
+    """
+
+    permission_classes = [IsAdminUser | IsManager]
+    serializer_class = StatusToggleSerializer
+
+    def post(self, request, *args, **kwargs):
+        serialier = self.serializer_class(data=request.data)
+        if not serialier.is_valid():
+            return Response(serialier.errors, status=status.HTTP_400_BAD_REQUEST)
+        username = serialier.validated_data.get("username")
+        is_active = serialier.validated_data.get("is_active")
+
+        customer = Customer.objects.filter(username=username).first()
+        if not customer:
+            return Response(
+                {"error": "Customer not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        customer.is_active = is_active
+        success, message = toggle_ppp_user(username, not is_active)
+        if not success:
+            return Response({"error": message}, status=status.HTTP_400_BAD_REQUEST)
+
+        customer.save(update_fields=["is_active"])
+
+        return Response({"message": message}, status=status.HTTP_200_OK)
