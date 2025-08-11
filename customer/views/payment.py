@@ -28,11 +28,15 @@ class PaymentsList(ListCreateAPIView):
     # ]  # Only Admin and Manager can create payments
 
     def get_queryset(self):
+        paid: bool = self.request.query_params.get("paid", None)
         queryset = Payment().get_all_actives().select_related("customer", "entry_by")
         customer_name = self.request.query_params.get("customer_name", None)
         customer_phone = self.request.query_params.get("customer_phone", None)
         collected_by = self.request.query_params.get("collected_by", None)
         month = self.request.query_params.get("month", None)
+        if paid:
+            paid = paid.lower() == "true"
+            queryset = queryset.filter(paid=paid)
         if month:
             queryset = queryset.filter(billing_month=month)
         if collected_by:
