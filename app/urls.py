@@ -8,7 +8,7 @@ from django.contrib import admin
 from django.urls import path, re_path, include
 
 from rest_framework import permissions
-
+from customer.views.customer import Dashboard
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -21,6 +21,8 @@ urlpatterns = [
     # include payment endpoints
     path("api/v1/payments", include("customer.urls.payment"), name="payment-urls"),
     # include core endpoints
+    # Dashboard endpoints
+    path("api/v1/dashboard", Dashboard.as_view(), name="dashboard"),
 ]
 
 if settings.DEBUG:

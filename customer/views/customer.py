@@ -1,6 +1,7 @@
 from django.utils import timezone
+from django.db.models import Q, Count, Sum
 
-
+from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import SAFE_METHODS
@@ -18,11 +19,12 @@ from core.permissions import (
     AllowAny,
 )
 
-from customer.models import Customer, Payment
+from customer.models import Customer, Payment, Package
 from customer.serializers.customer import (
     CustomerListSerializer,
     CustomerDetailSerializer,
 )
+from customer.serializers.payment import PaymentListSerializer
 from customer.serializers.payment import PaymentListSerializer
 
 
@@ -99,12 +101,11 @@ class GenerateBill(APIView):
 
     def post(self, request, *args, **kwargs):
         month = request.query_params.get("month", timezone.now().strftime("%B").upper())
-        print(" Month:", month)
 
         # Step 1: Get all active customers
-        active_customers = Customer.objects.filter(is_active=True).select_related(
-            "package"
-        )
+        active_customers = Customer.objects.filter(
+            is_active=True, is_free=False
+        ).select_related("package")
 
         # Step 2: Get customer IDs with existing payments for current month
         existing_payments = Payment.objects.filter(billing_month=month)
@@ -140,4 +141,66 @@ class GenerateBill(APIView):
                 "created_payments_count": len(payments_to_create),
                 # "payments": payments_to_create,
             }
+        )
+
+
+class Dashboard(APIView):
+    """
+    Optimized dashboard API returning key metrics and recent activity.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        now = timezone.now()
+        current_month = now.strftime("%B").upper()  # e.g., "April"
+        # thirty_days_ago = now - timezone.timedelta(days=30)
+
+        # === 1. Aggregated Stats ===
+        customer_stats = Customer.objects.aggregate(
+            total=Count("id"), active=Count("id", filter=Q(is_active=True))
+        )
+
+        package_stats = Package.objects.aggregate(total=Count("id"))
+
+        payment_stats = Payment.objects.aggregate(
+            total_paid=Count("id", filter=Q(paid=True)),
+            total_amount=Sum("amount", filter=Q(paid=True)),
+            pending=Count("id", filter=Q(paid=False)),
+            current_month_count=Count(
+                "id", filter=Q(paid=True, billing_month=current_month)
+            ),
+        )
+
+        # === 2. Recent Data ===
+        # recent_customers = (
+        #     Customer.objects.filter(created_at__gte=thirty_days_ago)
+        #     .select_related("package")
+        #     .order_by("-created_at")[:10]
+        # )
+
+        # recent_payments = (
+        #     Payment.objects.filter(paid=True, created_at__gte=thirty_days_ago)
+        #     .select_related("customer", "entry_by")
+        #     .order_by("-created_at")[:10]
+        # )
+
+        # === 3. Response ===
+        return Response(
+            {
+                "total_customers": customer_stats["total"],
+                "active_customers": customer_stats["active"],
+                "total_packages": package_stats["total"],
+                "total_payments": payment_stats["total_paid"],
+                "total_revenue": f"{payment_stats['total_amount'] or 0.0:.2f}",
+                "pending_payments": payment_stats["pending"],
+                "current_month_payments": payment_stats["current_month_count"],
+                # "recent_customers": CustomerListSerializer(
+                #     recent_customers, many=True
+                # ).data,
+                # "recent_payments": PaymentListSerializer(
+                #     recent_payments, many=True
+                # ).data,
+            },
+            status=status.HTTP_200_OK,
         )
