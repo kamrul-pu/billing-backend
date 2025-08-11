@@ -48,7 +48,7 @@ class CustomerList(ListCreateAPIView):
         package_id = self.request.query_params.get("package_id", None)
         is_active: bool = self.request.query_params.get("is_active", None)
         if username:
-            queryset = queryset.filter(username=username)
+            queryset = queryset.filter(username__icontains=username)
         if is_active:
             queryset = queryset.filter(is_active=is_active.lower() == "true")
         if name:
