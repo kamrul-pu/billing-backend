@@ -43,13 +43,15 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("true", "1", "yes")
 # print(f"DEBUG: {DEBUG}")
+DEBUG = True
 
 ENABLE_SILK = os.environ.get("ENABLE_SILK", False)
 
 # ALLOWED_HOSTS = os.environ.get(
 #     "DJANGO_ALLOWED_HOSTS", "billing-backend-0ufp.onrender.com"
 # ).split(",")
-ALLOWED_HOSTS = ["billing-backend-0ufp.onrender.com"]
+# ALLOWED_HOSTS = ["billing-backend-0ufp.onrender.com"]
+ALLOWED_HOSTS = ["*"]
 
 # CSRF_TRUSTED_ORIGINS = os.getenv(
 #     "DJANGO_CSRF_TRUSTED_ORIGINS", "https://127.0.0.1"

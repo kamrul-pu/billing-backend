@@ -37,7 +37,11 @@ class Customer(NameDescriptionBaseModel):
         verbose_name=("user"),
         related_name="customer_user",
     )
-    phone = models.CharField(max_length=20, unique=True)
+    phone = models.CharField(max_length=20, blank=True)
+    secret_id = models.CharField(
+        max_length=64,
+        blank=True,
+    )
     email = models.EmailField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
     nid = models.CharField(
@@ -49,6 +53,9 @@ class Customer(NameDescriptionBaseModel):
     )
     connection_start_date = models.DateField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    is_free = models.BooleanField(
+        default=False, help_text="Indicates if the customer has a free package."
+    )
 
     # Credentials
     ip_address = models.CharField(max_length=45, blank=True)
