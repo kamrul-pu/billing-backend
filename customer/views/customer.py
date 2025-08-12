@@ -111,7 +111,7 @@ class GenerateBill(APIView):
 
         # Step 1: Get all active customers
         active_customers = Customer.objects.filter(
-            is_active=True, is_free=False
+            is_active=True, is_free=False, package__price__gt=0
         ).select_related("package")
 
         # Step 2: Get customer IDs with existing payments for current month

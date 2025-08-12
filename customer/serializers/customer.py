@@ -17,7 +17,16 @@ class CustomerBase(serializers.ModelSerializer):
 
     class Meta:
         model = Customer
-        fields = ("id", "uid", "name", "email", "phone", "address", "nid")
+        fields = (
+            "id",
+            "uid",
+            "name",
+            "email",
+            "phone",
+            "address",
+            "nid",
+            "is_free",
+        )
         read_only_fields = (
             "id",
             "uid",
