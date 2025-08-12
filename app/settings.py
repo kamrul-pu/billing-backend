@@ -45,7 +45,7 @@ DEBUG = os.environ.get("DEBUG", "False").lower() in ("true", "1", "yes")
 # print(f"DEBUG: {DEBUG}")
 DEBUG = True
 
-ENABLE_SILK = os.environ.get("ENABLE_SILK", False)
+ENABLE_SILK = os.environ.get("ENABLE_SILK", "False").lower() == "true"
 
 # ALLOWED_HOSTS = os.environ.get(
 #     "DJANGO_ALLOWED_HOSTS", "billing-backend-0ufp.onrender.com"
