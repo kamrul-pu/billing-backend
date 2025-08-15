@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import SAFE_METHODS
 
@@ -28,26 +29,38 @@ class PaymentsList(ListCreateAPIView):
     # ]  # Only Admin and Manager can create payments
 
     def get_queryset(self):
-        paid: bool = self.request.query_params.get("paid", None)
         queryset = Payment().get_all_actives().select_related("customer", "entry_by")
+        
+        # Text search filters
+        # Individual filters
+        paid = self.request.query_params.get("paid", None)
         customer_name = self.request.query_params.get("customer_name", None)
         customer_phone = self.request.query_params.get("customer_phone", None)
         collected_by = self.request.query_params.get("collected_by", None)
         month = self.request.query_params.get("month", None)
-        if paid:
+        payment_method = self.request.query_params.get("payment_method", None)
+        payment_date = self.request.query_params.get("payment_date", None)
+        
+        # Apply filters
+        if paid is not None:
             paid = paid.lower() == "true"
             queryset = queryset.filter(paid=paid)
         if month:
             queryset = queryset.filter(billing_month=month)
         if collected_by:
-            queryset = queryset.filter(entry_by__first_name__icontains=collected_by)
-        if customer_phone:
-            queryset = (
-                Payment().get_all_actives().filter(customer__phone=customer_phone)
+            queryset = queryset.filter(
+                Q(entry_by__first_name__icontains=collected_by) |
+                Q(entry_by__last_name__icontains=collected_by)
             )
-
+        if customer_phone:
+            queryset = queryset.filter(customer__phone__icontains=customer_phone)
         if customer_name:
             queryset = queryset.filter(customer__name__icontains=customer_name)
+        if payment_method:
+            queryset = queryset.filter(payment_method=payment_method)
+        if payment_date:
+            queryset = queryset.filter(payment_date=payment_date)
+            
         return queryset
 
 

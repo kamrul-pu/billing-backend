@@ -42,27 +42,45 @@ class CustomerList(ListCreateAPIView):
 
     def get_queryset(self):
         queryset = Customer().get_all_actives().select_related("package")
-        name: str = self.request.query_params.get("name", None)
-        username: str = self.request.query_params.get("username", None)
-        user_id: int = self.request.query_params.get("user_id", None)
-        phone: str = self.request.query_params.get("phone", None)
+        
+        # Text search filters
+        search = self.request.query_params.get("search", None)
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(phone__icontains=search) |
+                Q(email__icontains=search) |
+                Q(username__icontains=search) |
+                Q(ip_address__icontains=search)
+            )
+        
+        # Individual filters
+        name = self.request.query_params.get("name", None)
+        username = self.request.query_params.get("username", None)
+        user_id = self.request.query_params.get("user_id", None)
+        phone = self.request.query_params.get("phone", None)
         package_id = self.request.query_params.get("package_id", None)
-        is_active: bool = self.request.query_params.get("is_active", None)
-        is_free: bool = self.request.query_params.get("is_free", None)
-        if is_free:
-            queryset = queryset.filter(is_free=is_free)
+        is_active = self.request.query_params.get("is_active", None)
+        is_free = self.request.query_params.get("is_free", None)
+        connection_type = self.request.query_params.get("connection_type", None)
+        
+        # Apply filters
+        if is_free is not None:
+            queryset = queryset.filter(is_free=is_free.lower() == "true")
         if username:
             queryset = queryset.filter(username__icontains=username)
-        if is_active:
+        if is_active is not None:
             queryset = queryset.filter(is_active=is_active.lower() == "true")
         if name:
             queryset = queryset.filter(name__icontains=name)
         if user_id:
             queryset = queryset.filter(user_id=user_id)
         if phone:
-            queryset = queryset.filter(phone=phone)
+            queryset = queryset.filter(phone__icontains=phone)
         if package_id:
             queryset = queryset.filter(package_id=package_id)
+        if connection_type:
+            queryset = queryset.filter(connection_type=connection_type)
 
         return queryset
 
