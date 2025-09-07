@@ -7,13 +7,75 @@ from django.contrib.auth.models import AbstractBaseUser
 from django.db import models
 
 
-from common.models import BaseModelWithUID
+from common.models import BaseModelWithUID, NameDescriptionBaseModel
 
-from core.choices import (
-    UserKind,
-    UserGender,
-)
+from core.choices import UserKind, UserGender, SubscriptionType, SubscriptionStatus
 from core.utils import get_user_media_path_prefix
+
+
+class Subscription(NameDescriptionBaseModel):
+    """Model representing organization subscriptions."""
+
+    plan = models.CharField(
+        max_length=20,
+        choices=SubscriptionType.choices,
+        default=SubscriptionType.FREE,
+    )
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    max_customers = models.IntegerField(default=100)
+
+    def __str__(self):
+        return f"{self.name} - {self.plan}"
+
+    class Meta:
+        verbose_name = "Subscription"
+        verbose_name_plural = "Subscriptions"
+        ordering = ["-pk"]
+
+
+class Organization(NameDescriptionBaseModel):
+    """Model representing an ISP organization."""
+
+    # owner = models.ForeignKey(
+    #     "User", on_delete=models.PROTECT, related_name="owned_organizations"
+    # )
+    address = models.TextField(blank=True)
+    phone = models.CharField(max_length=20)
+    email = models.EmailField(blank=True)
+    website = models.URLField(blank=True)
+    subscription = models.ForeignKey(
+        Subscription, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    subscription_status = models.CharField(
+        max_length=20,
+        choices=SubscriptionStatus.choices,
+        default=SubscriptionStatus.PENDING,
+    )
+    # Mikrotik credentials
+    router_ip = models.CharField(max_length=64, blank=True)
+    router_username = models.CharField(max_length=150, blank=True)
+    router_password = models.CharField(max_length=128, blank=True)
+    router_port = models.IntegerField(default=8728, blank=True)
+    router_secret = models.CharField(max_length=150, blank=True)
+    router_ssl = models.BooleanField(
+        default=False, help_text="Use SSL for Mikrotik connection"
+    )
+    # Additional fields for better organization management
+
+    # Organization status
+    # is_active = models.BooleanField(default=True)
+    subscription_end_date = models.DateField(null=True, blank=True)
+    logo = models.ImageField(upload_to="organizations/", blank=True)
+    allowed_customer = models.IntegerField(default=0)
+    total_customer = models.IntegerField(default=0)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Organization"
+        verbose_name_plural = "Organizations"
+        ordering = ["-pk"]
 
 
 class UserManager(BaseUserManager):
@@ -52,6 +114,14 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser, BaseModelWithUID):
     """Users in the System"""
 
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.SET_NULL,
+        related_name="users",
+        null=True,
+        blank=True,
+        help_text="The organization this user belongs to.",
+    )
     first_name = models.CharField(
         max_length=150,
         blank=True,

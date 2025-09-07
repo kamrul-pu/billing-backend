@@ -43,20 +43,26 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "False").lower() in ("true", "1", "yes")
 # print(f"DEBUG: {DEBUG}")
-DEBUG = True
+# DEBUG = True  # Remove this hardcoded line
 
 ENABLE_SILK = os.environ.get("ENABLE_SILK", "False").lower() == "true"
 
-# ALLOWED_HOSTS = os.environ.get(
-#     "DJANGO_ALLOWED_HOSTS", "billing-backend-0ufp.onrender.com"
-# ).split(",")
-# ALLOWED_HOSTS = ["billing-backend-0ufp.onrender.com"]
-ALLOWED_HOSTS = ["*"]
+# Proper ALLOWED_HOSTS configuration
+ALLOWED_HOSTS = os.environ.get(
+    "DJANGO_ALLOWED_HOSTS", "localhost,htpp://127.0.0.1,http://0.0.0.0"
+).split(",")
 
+print("ALLOWED HOSTS: ", ALLOWED_HOSTS)
 # CSRF_TRUSTED_ORIGINS = os.getenv(
 #     "DJANGO_CSRF_TRUSTED_ORIGINS", "https://127.0.0.1"
 # ).split(",")
 
+# CSRF trusted origins for Docker setup
+CSRF_TRUSTED_ORIGINS = os.environ.get(
+    "DJANGO_CSRF_TRUSTED_ORIGINS",
+    "http://localhost,http://127.0.0.1,http://0.0.0.0"
+).split(",")
+print("CSRF_TRUSTED_ORIGINS: ", CSRF_TRUSTED_ORIGINS)
 MIKROTIK_URL = os.environ.get(
     "MIKROTIK_URL", "http://103.146.16.148"
 )  # Use http:// or https://
@@ -99,7 +105,8 @@ MIDDLEWARE = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "django.middleware.csrf.CsrfViewMiddleware",
+    "core.csrf_middleware.CSRFExemptMiddleware",  # Add our custom CSRF exemption middleware
+    "core.csrf_middleware.CustomCsrfViewMiddleware",  # Use our custom CSRF middleware
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
@@ -143,7 +150,7 @@ WSGI_APPLICATION = "app.wsgi.application"
 #     "DATABASE_URL", "postgres://dev_user:changeme@db:5432/dev_db"
 # )
 DATABASE_URL = os.environ.get("DATABASE_URL", "")
-print("Database url: ", DATABASE_URL)
+
 DATABASES = {
     "default": dj_database_url.config(
         default=DATABASE_URL,
@@ -249,22 +256,86 @@ REST_FRAMEWORK = {
 }
 
 
-# Cors Allowed Origins
-CORS_ALLOWED_ORIGINS = os.environ.get(
-    "CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
-).split(",")
+# # Cors Allowed Origins
+# CORS_ALLOWED_ORIGINS = os.environ.get(
+#     "CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
+# ).split(",")
 
-# Cors alowed origin
+# # Cors alowed origin
 # CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",
-#     "http://127.0.0.1:3000",
+#     "http://localhost",
+#     "http://127.0.0.1",
 # ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+# Proper CORS configuration for Docker setup
+CORS_ALLOWED_ORIGINS = [
+    origin
+    for origin in os.environ.get(
+        "CORS_ALLOWED_ORIGINS",
+        "http://localhost,http://127.0.0.1:3000,http://103.146.16.148,http://103.146.16.148:1111",
+    ).split(",")
+    if origin
+]
 
-# CORS_ALLOWED_ORIGIN_REGEXES = [
-#     r"^http://localhost(:[0-9]+)?$",
-#     r"^http://127\\.0\\.0\\.1(:[0-9]+)?$",
-#     r"^http://192\\.168\\.[0-9]+\\.[0-9]+(:[0-9]+)?$",
-#     r"^http://10\\.[0-9]+\\.[0-9]+\\.[0-9]+(:[0-9]+)?$",
-# ]
+
+# Only allow CORS_ALLOW_ALL_ORIGINS in development
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
+
+# Additional CORS settings for better compatibility
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_HEADERS = True
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+
+# CSRF Configuration for API - Use environment variables
+CSRF_TRUSTED_ORIGINS = [
+    origin
+    for origin in os.environ.get(
+        "DJANGO_CSRF_TRUSTED_ORIGINS",
+        "http://localhost,http://127.0.0.1,http://localhost:3000,http://127.0.0.1:3000,http://103.146.16.148,http://103.146.16.148:1111",
+    ).split(",")
+    if origin
+]
+
+
+# CSRF exemption for API endpoints (since we're using JWT authentication)
+CSRF_EXEMPT_URLS = [
+    r"^/api/.*$",  # All API endpoints
+    r"^/users/login.*$",  # Login endpoints specifically
+    r"^/users/login/refresh.*$",  # Token refresh endpoints
+    r"^/dashboard.*$",  # Dashboard endpoint
+]
+
+# CORS allowed origin regexes for better network support
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^http://localhost(:[0-9]+)?$",
+    r"^http://127\.0\.0\.1(:[0-9]+)?$",
+    r"^http://192\.168\.68\.108(:[0-9]+)?$",
+    r"^http://10\.[0-9]+\.[0-9]+\.[0-9]+(:[0-9]+)?$",
+]
+
+
+# Celery Configurations
+# Use Redis as broker
+# CELERY_broker_url = "redis://localhost:6379/0"
+
+# Where to store task results
+# result_backend = "redis://localhost:6379/0"
+
+# Optional: task settings
+accept_content = ["json"]
+task_serializer = "json"
+result_serializer = "json"
+timezone = "Asia/Dhaka"
+
+
+redis_url = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")

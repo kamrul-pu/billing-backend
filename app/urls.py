@@ -6,12 +6,33 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, re_path, include
+from django.http import JsonResponse
 
 from rest_framework import permissions
 from customer.views.customer import Dashboard
 
+
+def health_check(request):
+    """Health check endpoint for Docker."""
+    return JsonResponse({"status": "healthy", "service": "django-backend"})
+
+
 urlpatterns = [
     path("admin/", admin.site.urls),
+    # Health check endpoint
+    path("health/", health_check, name="health-check"),
+    # include subscription endpoints
+    path(
+        "api/v1/subscriptions",
+        include("core.urls.subscription"),
+        name="subscription-urls",
+    ),
+    # include organization endpoints
+    path(
+        "api/v1/organizations",
+        include("core.urls.organization"),
+        name="organization-urls",
+    ),
     # include user endpoints
     path("api/v1/users", include("core.urls.user"), name="user-urls"),
     # include package endpoints
@@ -46,7 +67,7 @@ if settings.DEBUG:
     )
     urlpatterns += [
         path(
-            "swagger<format>/",
+            "api/swagger<format>/",
             schema_view.without_ui(cache_timeout=0),
             name="schema-json",
         ),
@@ -56,7 +77,9 @@ if settings.DEBUG:
             name="schema-swagger-ui",
         ),
         path(
-            "redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"
+            "api/redoc/",
+            schema_view.with_ui("redoc", cache_timeout=0),
+            name="schema-redoc",
         ),
     ]
 

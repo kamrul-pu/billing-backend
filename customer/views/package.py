@@ -27,7 +27,6 @@ from core.permissions import (
 class PackageList(ListCreateAPIView):
     """API view to list and create packages."""
 
-    queryset = Package().get_all_actives()
     serializer_class = PackageListSerializer
     permission_classes = [IsAdminUser | IsManager | IsStaff]
 
@@ -36,11 +35,18 @@ class PackageList(ListCreateAPIView):
             return [AllowAny()]
         return [(IsAdminUser | IsManager | IsStaff)()]
 
+    def get_queryset(self):
+        queryset = (
+            Package()
+            .get_all_actives()
+            .filter(organization_id=self.request.user.oraganization_id)
+        )
+        return queryset
+
 
 class PackageDetail(RetrieveUpdateDestroyAPIView):
     """API view to retrieve, update, or delete a package."""
 
-    queryset = Package().get_all_actives()
     serializer_class = PackageDetailSerializer
     permission_classes = [IsAdminUser | IsManager | IsStaff]
     lookup_field = "uid"
@@ -52,6 +58,14 @@ class PackageDetail(RetrieveUpdateDestroyAPIView):
             return [IsAdminUser()]
         return [(IsAdminUser | IsManager)()]
 
+    def get_queryset(self):
+        queryset = (
+            Package()
+            .get_all_actives()
+            .filter(organization_id=self.request.user.oraganization_id)
+        )
+        return queryset
+
 
 class PackageCustomerList(ListAPIView):
     """API view to list customers of a package."""
@@ -61,5 +75,11 @@ class PackageCustomerList(ListAPIView):
 
     def get_queryset(self):
         uid = self.kwargs.get("uid")
-        queryset = Customer().get_all_actives().filter(package__uid=uid)
+        queryset = (
+            Customer()
+            .get_all_actives()
+            .filter(
+                package__uid=uid, organization_id=self.request.user.oraganization_id
+            )
+        )
         return queryset

@@ -26,7 +26,9 @@ from customer.serializers.customer import (
     StatusToggleSerializer,
 )
 from customer.serializers.payment import PaymentListSerializer
-from customer.utils import toggle_ppp_user
+
+# from customer.utils import toggle_ppp_user
+from customer.helpers import Mikrotik
 
 
 class CustomerList(ListCreateAPIView):
@@ -41,19 +43,25 @@ class CustomerList(ListCreateAPIView):
     #     ]  # Only Admin and Manager can create customers
 
     def get_queryset(self):
-        queryset = Customer().get_all_actives().select_related("package")
-        
+        user = self.request.user
+        queryset = (
+            Customer()
+            .get_all_actives()
+            .filter(organization_id=user.organization_id)
+            .select_related("package", "organization")
+        )
+
         # Text search filters
         search = self.request.query_params.get("search", None)
         if search:
             queryset = queryset.filter(
-                Q(name__icontains=search) |
-                Q(phone__icontains=search) |
-                Q(email__icontains=search) |
-                Q(username__icontains=search) |
-                Q(ip_address__icontains=search)
+                Q(name__icontains=search)
+                | Q(phone__icontains=search)
+                | Q(email__icontains=search)
+                | Q(username__icontains=search)
+                | Q(ip_address__icontains=search)
             )
-        
+
         # Individual filters
         name = self.request.query_params.get("name", None)
         username = self.request.query_params.get("username", None)
@@ -63,7 +71,7 @@ class CustomerList(ListCreateAPIView):
         is_active = self.request.query_params.get("is_active", None)
         is_free = self.request.query_params.get("is_free", None)
         connection_type = self.request.query_params.get("connection_type", None)
-        
+
         # Apply filters
         if is_free is not None:
             queryset = queryset.filter(is_free=is_free.lower() == "true")
@@ -86,7 +94,7 @@ class CustomerList(ListCreateAPIView):
 
 
 class CustomerDetail(RetrieveUpdateDestroyAPIView):
-    queryset = Customer().get_all_actives().select_related("package", "user")
+
     serializer_class = CustomerDetailSerializer
     permission_classes = [IsAdminUser | IsManager | IsStaff]
     lookup_field = "uid"
@@ -97,6 +105,15 @@ class CustomerDetail(RetrieveUpdateDestroyAPIView):
         return [
             (IsAdminUser | IsManager)()
         ]  # Only Admin and Manager can modify customers
+
+    def get_queryset(self):
+        queryset = (
+            Customer()
+            .get_all_actives()
+            .filter(organization_id=self.request.user.organization_id)
+            .select_related("package", "user", "organization")
+        )
+        return queryset
 
 
 class CustomerPaymentsList(ListCreateAPIView):
@@ -114,7 +131,10 @@ class CustomerPaymentsList(ListCreateAPIView):
         return (
             Payment()
             .get_all_actives()
-            .filter(customer__uid=self.kwargs["uid"])
+            .filter(
+                customer__uid=self.kwargs["uid"],
+                organization_id=self.request.user.organization_id,
+            )
             .select_related("customer", "entry_by")
         )
 
@@ -132,11 +152,15 @@ class GenerateBill(APIView):
 
         # Step 1: Get all active customers
         active_customers = Customer.objects.filter(
-            is_active=True, is_free=False, package__price__gt=0
+            is_active=True,
+            is_free=False,
+            organization_id=request.user.organization_id,
         ).select_related("package")
 
         # Step 2: Get customer IDs with existing payments for current month
-        existing_payments = Payment.objects.filter(billing_month=month)
+        existing_payments = Payment.objects.filter(
+            billing_month=month, organization_id=request.user.organization_id
+        )
         paid_customer_ids = set(existing_payments.values_list("customer_id", flat=True))
 
         # Step 3: Filter customers who haven't been billed
@@ -150,6 +174,7 @@ class GenerateBill(APIView):
             bill_amount = customer.package.price if customer.package else 0.0
             payments_to_create.append(
                 Payment(
+                    organization_id=request.user.organization_id,
                     customer=customer,
                     bill_amount=bill_amount,
                     amount=0.0,
@@ -185,13 +210,17 @@ class Dashboard(APIView):
         # thirty_days_ago = now - timezone.timedelta(days=30)
 
         # === 1. Aggregated Stats ===
-        customer_stats = Customer.objects.aggregate(
-            total=Count("id"), active=Count("id", filter=Q(is_active=True))
-        )
+        customer_stats = Customer.objects.filter(
+            organization_id=request.user.organization_id
+        ).aggregate(total=Count("id"), active=Count("id", filter=Q(is_active=True)))
 
-        package_stats = Package.objects.aggregate(total=Count("id"))
+        package_stats = Package.objects.filter(
+            organization_id=request.user.organization_id
+        ).aggregate(total=Count("id"))
 
-        payment_stats = Payment.objects.aggregate(
+        payment_stats = Payment.objects.filter(
+            organization_id=request.user.organization_id
+        ).aggregate(
             total_paid=Count("id", filter=Q(paid=True)),
             total_amount=Sum("amount", filter=Q(paid=True)),
             pending=Count("id", filter=Q(paid=False)),
@@ -256,7 +285,7 @@ class StatusToggle(APIView):
                 status=status.HTTP_404_NOT_FOUND,
             )
         customer.is_active = is_active
-        success, message = toggle_ppp_user(username, not is_active)
+        success, message = Mikrotik.toggle_ppp_user(username, not is_active)
         if not success:
             return Response({"error": message}, status=status.HTTP_400_BAD_REQUEST)
 

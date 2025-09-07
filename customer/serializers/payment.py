@@ -105,7 +105,7 @@ class PaymentListSerializer(PaymentBase):
                 payment.transaction_id = str(transaction_id)
                 payment.entry_by = request.user
                 payment.updated_by = request.user
-                payment.note = f"Payment updated by {request.user.get_full_name() or request.user.username}"
+                payment.note = f"Payment updated by {request.user.first_name} {request.user.last_name}"
                 payment.save(
                     update_fields=[
                         "payment_date",

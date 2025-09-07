@@ -46,6 +46,17 @@ class UserList(ListCreateAPIView):
     serializer_class = UserListSerializer
     queryset = User().get_all_actives()
 
+    def get_queryset(self):
+        if self.request.user.is_superuser or self.request.user.kind == "SUPER_ADMIN":
+            return User().get_all_actives()
+        elif self.request.user.kind == "ADMIN" or self.request.user.kind == "MANAGER":
+            return (
+                User()
+                .get_all_actives()
+                .filter(organization_id=self.request.user.organization_id)
+            )
+        return User().get_all_actives().filter(id=self.request.user.id)
+
 
 class UserDetail(RetrieveUpdateDestroyAPIView):
     permission_classes = (IsAdminUser | IsManager,)
@@ -53,9 +64,20 @@ class UserDetail(RetrieveUpdateDestroyAPIView):
     queryset = User().get_all_actives()
     lookup_field = "uid"
 
+    def get_queryset(self):
+        if self.request.user.is_superuser or self.request.user.kind == "SUPER_ADMIN":
+            return User().get_all_actives()
+        elif self.request.user.kind == "ADMIN" or self.request.user.kind == "MANAGER":
+            return (
+                User()
+                .get_all_actives()
+                .filter(organization_id=self.request.user.organization_id)
+            )
+        return User().get_all_actives().filter(id=self.request.user.id)
+
 
 class UserRegistration(CreateAPIView):
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAdminUser | IsManager | IsStaff,)
     serializer_class = UserRegistrationSerializer
     queryset = User().get_all_actives()
 

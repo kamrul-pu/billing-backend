@@ -7,9 +7,11 @@ from customer.models import Customer, Package
 from core.serializers.user import UserListSerializer
 from core.models import User
 
+from customer.choices import ConnectionType
 from customer.serializers.package import PackageBase
 
 # from customer.utils import toggle_ppp_user
+from customer.helpers import Mikrotik
 
 
 class CustomerBase(serializers.ModelSerializer):
@@ -57,8 +59,19 @@ class CustomerListSerializer(CustomerBase):
 
     @transaction.atomic
     def create(self, validated_data):
-        phone = validated_data.get("phone")
+        phone = validated_data.get("phone", None)
         email = validated_data.get("email", None)
+        # package_id = validated_data.get("package_id", None)
+        # username = validated_data.get("username", None)
+        # if not username or username == "":
+        #     serializers.ValidationError(
+        #         {"username": "Username is required to create user."}
+        #     )
+        # package = Package.objects.get(id=package_id)
+        # if not package:
+        #     raise serializers.ValidationError(
+        #         {"package": "Packge not found for this id"}
+        #     )
         # Check if the phone number is already in use
         if email and (
             Customer.objects.filter(email=email).exists()
@@ -67,10 +80,32 @@ class CustomerListSerializer(CustomerBase):
             raise serializers.ValidationError(
                 {"email": "This email is already in use."}
             )
-        if Customer.objects.filter(phone=phone).exists():
+        if phone and Customer.objects.filter(phone=phone).exists():
             raise serializers.ValidationError(
                 {"phone": "This phone number is already in use."}
             )
+        # connection_type = validated_data.get("connection_type", ConnectionType.PPPoE)
+        # if username and connection_type == ConnectionType.PPPoE:
+        #     username: str = validated_data.get("username", None)
+        #     existing_user, msg = Mikrotik.get_user_by_username(username)
+        #     if existing_user:
+        #         raise serializers.ValidationError(
+        #             {"username": "User with this username already exists."}
+        #         )
+        #     # Create an user in miktotik
+        #     success, msg = Mikrotik.create_ppp_user(
+        #         {
+        #             "username": username,
+        #             "password": validated_data.get("password", "12345"),
+        #             "service": "pppoe",
+        #             "profile": str(package.speed_mbps) + "Mbps",
+        #         }
+        #     )
+        #     if not success:
+        #         raise serializers.ValidationError(
+        #             {"message": "Failed to create user in Server"}
+        #         )
+
         # Create an user object for this customer for future use
         # user = User.objects.filter(phone=phone).first()
         # if user:
@@ -89,6 +124,21 @@ class CustomerListSerializer(CustomerBase):
         #     password="123456",  # Default password, can be changed later
         # )
         # validated_data["user_id"] = user.id
+        organization = self.context["request"].user.organization
+        if not organization:
+            raise serializers.ValidationError(
+                {"organization": "Organization not found for this user."}
+            )
+        if organization.allowed_customer <= organization.total_customer:
+            raise serializers.ValidationError(
+                {
+                    "organization": "Customer limit exceeded. Please upgrade your plan or contact support."
+                }
+            )
+        organization.total_customer += 1
+        organization.save(update_fields=["total_customer"])
+        validated_data["organization_id"] = self.context["request"].user.organization_id
+        # Save the entry_by and update_by fields
         validated_data["entry_by_id"] = self.context["request"].user.id
         validated_data["updated_by_id"] = self.context["request"].user.id
         return Customer.objects.create(**validated_data)
@@ -126,10 +176,17 @@ class CustomerDetailSerializer(CustomerBase):
         # if instance.is_active != is_active:
         #     # Need to toggle the user status in MikroTik
         #     print("Need to toggle the user status in MikroTik")
-        #     toggle_ppp_user(instance.username, not is_active)
+        #     Mikrotik.toggle_ppp_user(instance.username, not is_active)
         # else:
         #     print("No need to toggle the user status in MikroTik")
         return super().update(instance, validated_data)
+
+    def delete(self, instance):
+        organization = self.context["request"].user.organization
+        if organization and organization.total_customer > 0:
+            organization.total_customer -= 1
+            organization.save(update_fields=["total_customer"])
+        return super().delete(instance)
 
 
 class StatusToggleSerializer(serializers.Serializer):

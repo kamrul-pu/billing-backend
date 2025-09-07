@@ -7,7 +7,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
 from unfold.admin import ModelAdmin
 
-from core.models import User
+from core.models import User, Organization, Subscription
 
 
 class UserAdmin(BaseUserAdmin, ModelAdmin):
@@ -33,6 +33,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
                     "password",
                     "first_name",
                     "last_name",
+                    "organization",
                     "image",
                     "kind",
                     "gender",
@@ -66,6 +67,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
                     "password2",
                     "first_name",
                     "last_name",
+                    "organization",
                     "image",
                     "kind",
                     "gender",
@@ -82,3 +84,21 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
 
 
 admin.site.register(User, UserAdmin)
+
+
+class SubscriptionAdmin(ModelAdmin):
+    list_display = ["id", "name", "name", "plan", "price", "max_customers", "status"]
+    list_filter = ("status", "plan")
+    ordering = ["-id"]
+
+
+admin.site.register(Subscription, SubscriptionAdmin)
+
+
+class OrganizationAdmin(ModelAdmin):
+    list_display = ["id", "name", "phone", "subscription_end_date", "status"]
+    list_filter = ("status",)
+    ordering = ["-id"]
+
+
+admin.site.register(Organization, OrganizationAdmin)

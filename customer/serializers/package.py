@@ -31,6 +31,7 @@ class PackageListSerializer(PackageBase):
 
     def create(self, validated_data):
         validated_data["entry_by_id"] = self.context["request"].user.id
+        validated_data["organization_id"] = self.context["request"].user.organization_id
         return super().create(validated_data)
 
 

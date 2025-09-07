@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 from customer.models import Customer, Package, Payment
-
+from core.models import Organization
 from django.db import transaction
 
 import requests
@@ -12,11 +12,11 @@ MIKROTIK_USER = "kamrul"
 MIKROTIK_PASS = "kamrul#2025"
 
 
-def get_users_from_server():
+def get_users_from_server(organization: Organization):
     try:
         response = requests.get(
-            f"{MIKROTIK_URL}/rest/ppp/secret",
-            auth=(MIKROTIK_USER, MIKROTIK_PASS),
+            f"{organization.router_ip}/rest/ppp/secret",
+            auth=(organization.router_username, organization.router_password),
             verify=False,  # Use CA in production
         )
         if response.status_code != 200:
@@ -44,10 +44,25 @@ class Command(BaseCommand):
     help = "Get customer data from server and update local database"
 
     def handle(self, *args, **kwargs):
-        packages = Package.objects.filter()
+        organization_id = input(
+            "Enter the organization ID to associate with the imported customers: "
+        )
+        if not organization_id:
+            print("Organization ID is required.")
+            return
+        organization = (
+            Organization().get_all_actives().filter(id=organization_id).first()
+        )
+        if not organization:
+            print("Organization not found for this id.")
+            return
+
+        packages = Package.objects.filter(organization_id=organization_id)
         package_dict = {pkg.speed_mbps: pkg for pkg in packages}
-        users = get_users_from_server()
-        db_customers = Customer.objects.filter().only("username")
+        users = get_users_from_server(organization=organization)
+        db_customers = Customer.objects.filter(organization_id=organization_id).only(
+            "username"
+        )
         db_customers_set = {customer.username: customer for customer in db_customers}
         customers_to_create = []
         for i in range(len(users)):
@@ -72,6 +87,7 @@ class Command(BaseCommand):
             package = package_dict.get(package_speed, None)
             if not package:
                 package = Package.objects.create(
+                    organization_id=organization_id,
                     name=PACKAGE_DETAIL.get(package_speed, {}).get(
                         "name", f"Package {package_speed} Mbps"
                     ),
@@ -89,6 +105,7 @@ class Command(BaseCommand):
                 service = "DHCP"
             customers_to_create.append(
                 Customer(
+                    organization_id=organization_id,
                     name=name.capitalize(),
                     secret_id=users[i].get(".id", ""),
                     username=username,
