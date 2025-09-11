@@ -339,3 +339,8 @@ timezone = "Asia/Dhaka"
 
 
 redis_url = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
+
+
+# Swagger settings
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True

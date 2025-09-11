@@ -10,6 +10,7 @@ from django.http import JsonResponse
 
 from rest_framework import permissions
 from customer.views.customer import Dashboard
+SWAGGER_BASE_URL = "https://api.mikrolink.artsensebd.com"
 
 
 def health_check(request):
@@ -64,6 +65,7 @@ if settings.DEBUG:
         ),
         public=True,
         permission_classes=(permissions.AllowAny,),
+        url=settings.SWAGGER_BASE_URL
     )
     urlpatterns += [
         path(
