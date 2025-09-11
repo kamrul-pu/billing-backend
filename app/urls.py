@@ -65,7 +65,7 @@ if settings.DEBUG:
         ),
         public=True,
         permission_classes=(permissions.AllowAny,),
-        url=settings.SWAGGER_BASE_URL
+        url=SWAGGER_BASE_URL
     )
     urlpatterns += [
         path(
