@@ -39,7 +39,7 @@ class PackageList(ListCreateAPIView):
         queryset = (
             Package()
             .get_all_actives()
-            .filter(organization_id=self.request.user.oraganization_id)
+            .filter(organization_id=self.request.user.organization_id)
         )
         return queryset
 
@@ -62,7 +62,7 @@ class PackageDetail(RetrieveUpdateDestroyAPIView):
         queryset = (
             Package()
             .get_all_actives()
-            .filter(organization_id=self.request.user.oraganization_id)
+            .filter(organization_id=self.request.user.organization_id)
         )
         return queryset
 
