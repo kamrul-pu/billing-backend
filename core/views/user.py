@@ -37,6 +37,7 @@ from core.permissions import (
     IsManager,
     IsStaff,
 )
+from core.choices import UserKind
 
 User = get_user_model()
 
@@ -47,9 +48,15 @@ class UserList(ListCreateAPIView):
     queryset = User().get_all_actives()
 
     def get_queryset(self):
-        if self.request.user.is_superuser or self.request.user.kind == "SUPER_ADMIN":
+        if (
+            self.request.user.is_superuser
+            or self.request.user.kind == UserKind.SUPER_ADMIN
+        ):
             return User().get_all_actives()
-        elif self.request.user.kind == "ADMIN" or self.request.user.kind == "MANAGER":
+        elif (
+            self.request.user.kind == UserKind.ADMIN
+            or self.request.user.kind == UserKind.MANAGER
+        ):
             return (
                 User()
                 .get_all_actives()
@@ -65,9 +72,15 @@ class UserDetail(RetrieveUpdateDestroyAPIView):
     lookup_field = "uid"
 
     def get_queryset(self):
-        if self.request.user.is_superuser or self.request.user.kind == "SUPER_ADMIN":
+        if (
+            self.request.user.is_superuser
+            or self.request.user.kind == UserKind.SUPER_ADMIN
+        ):
             return User().get_all_actives()
-        elif self.request.user.kind == "ADMIN" or self.request.user.kind == "MANAGER":
+        elif (
+            self.request.user.kind == UserKind.ADMIN
+            or self.request.user.kind == UserKind.MANAGER
+        ):
             return (
                 User()
                 .get_all_actives()
