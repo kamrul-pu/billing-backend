@@ -9,7 +9,9 @@ from django.urls import path, re_path, include
 from django.http import JsonResponse
 
 from rest_framework import permissions
+
 from customer.views.customer import Dashboard
+
 SWAGGER_BASE_URL = "https://api.mikrolink.artsensebd.com"
 
 
@@ -19,9 +21,9 @@ def health_check(request):
 
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
     # Health check endpoint
-    path("health/", health_check, name="health-check"),
+    path("", health_check, name="health-check"),
+    path("admin/", admin.site.urls),
     # include subscription endpoints
     path(
         "api/v1/subscriptions",
@@ -46,44 +48,66 @@ urlpatterns = [
     # Dashboard endpoints
     path("api/v1/dashboard", Dashboard.as_view(), name="dashboard"),
 ]
-
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    # drf yasg api documentation
-    from drf_yasg.views import get_schema_view
-    from drf_yasg import openapi
 
-    schema_view = get_schema_view(
-        openapi.Info(
-            title="Billing Backend",
-            default_version="1.0",
-            description="App for Bill Management",
-            terms_of_service="https://www.google.com/policies/terms/",
-            contact=openapi.Contact(email="contact@snippets.local"),
-            license=openapi.License(name="BSD License"),
-        ),
-        public=True,
-        permission_classes=(permissions.AllowAny,),
-        url=SWAGGER_BASE_URL
+if settings.ENABLE_DOC:
+    from drf_spectacular.views import (
+        SpectacularAPIView,
+        SpectacularRedocView,
+        SpectacularSwaggerView,
     )
+
     urlpatterns += [
-        path(
-            "api/swagger<format>/",
-            schema_view.without_ui(cache_timeout=0),
-            name="schema-json",
-        ),
+        path("api/schema", SpectacularAPIView.as_view(), name="schema"),
         path(
             "api/docs",
-            schema_view.with_ui("swagger", cache_timeout=0),
-            name="schema-swagger-ui",
+            SpectacularSwaggerView.as_view(url_name="schema"),
+            name="swagger-ui",
         ),
         path(
-            "api/redoc/",
-            schema_view.with_ui("redoc", cache_timeout=0),
-            name="schema-redoc",
+            "api/redoc",
+            SpectacularRedocView.as_view(url_name="schema"),
+            name="redoc",
         ),
     ]
+
+
+# drf yasg api documentation
+# from drf_yasg.views import get_schema_view
+# from drf_yasg import openapi
+
+# schema_view = get_schema_view(
+#     openapi.Info(
+#         title="Billing Backend",
+#         default_version="1.0",
+#         description="App for Bill Management",
+#         terms_of_service="https://www.google.com/policies/terms/",
+#         contact=openapi.Contact(email="contact@snippets.local"),
+#         license=openapi.License(name="BSD License"),
+#     ),
+#     public=True,
+#     permission_classes=(permissions.AllowAny,),
+#     url=SWAGGER_BASE_URL,
+# )
+# urlpatterns += [
+#     path(
+#         "api/swagger<format>/",
+#         schema_view.without_ui(cache_timeout=0),
+#         name="schema-json",
+#     ),
+#     path(
+#         "api/docs",
+#         schema_view.with_ui("swagger", cache_timeout=0),
+#         name="schema-swagger-ui",
+#     ),
+#     path(
+#         "api/redoc/",
+#         schema_view.with_ui("redoc", cache_timeout=0),
+#         name="schema-redoc",
+#     ),
+# ]
 
 if settings.ENABLE_SILK:
     urlpatterns += [re_path(r"^profiler/", include("silk.urls", namespace="silk"))]

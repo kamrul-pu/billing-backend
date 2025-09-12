@@ -46,7 +46,7 @@ DEBUG = os.environ.get("DEBUG", "False").lower() in ("true", "1", "yes")
 # DEBUG = True  # Remove this hardcoded line
 
 ENABLE_SILK = os.environ.get("ENABLE_SILK", "False").lower() == "true"
-
+ENABLE_DOC = os.environ.get("ENABLE_DOC", "False").lower() == "true"
 # Proper ALLOWED_HOSTS configuration
 ALLOWED_HOSTS = os.environ.get(
     "DJANGO_ALLOWED_HOSTS", "localhost,htpp://127.0.0.1,http://0.0.0.0"
@@ -59,8 +59,7 @@ print("ALLOWED HOSTS: ", ALLOWED_HOSTS)
 
 # CSRF trusted origins for Docker setup
 CSRF_TRUSTED_ORIGINS = os.environ.get(
-    "DJANGO_CSRF_TRUSTED_ORIGINS",
-    "http://localhost,http://127.0.0.1,http://0.0.0.0"
+    "DJANGO_CSRF_TRUSTED_ORIGINS", "http://localhost,http://127.0.0.1,http://0.0.0.0"
 ).split(",")
 print("CSRF_TRUSTED_ORIGINS: ", CSRF_TRUSTED_ORIGINS)
 MIKROTIK_URL = os.environ.get(
@@ -95,8 +94,8 @@ THIRD_PARTY_APPS = [
 if ENABLE_SILK:
     THIRD_PARTY_APPS += ["silk"]
 
-if DEBUG:
-    THIRD_PARTY_APPS += ["drf_yasg"]
+if ENABLE_DOC:
+    THIRD_PARTY_APPS += ["drf_spectacular"]
 
 INSTALLED_APPS = DJANGO_APPS + PROJECT_APPS + THIRD_PARTY_APPS
 
@@ -253,8 +252,30 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {"anon": "300/minute", "user": "1200/minute"},
     "DEFAULT_PAGINATION_CLASS": "common.pagination.ListPagination",
     "PAGE_SIZE": 20,
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
+import app.jwt_schema_extension
 
+if ENABLE_DOC:
+    REST_FRAMEWORK["DEFAULT_SCHEMA_CLASS"] = "drf_spectacular.openapi.AutoSchema"
+    SPECTACULAR_SETTINGS = {
+        "TITLE": "Mikrolink API",
+        "DESCRIPTION": "Your Trusted Network Partner",
+        "VERSION": "1.0.0",
+        "SERVE_INCLUDE_SCHEMA": False,  # optional
+        "SERVE_PERMISSIONS": ["rest_framework.permissions.AllowAny"],  # optional
+        # Define your custom security scheme
+        "COMPONENTS": {
+            "securitySchemes": {
+                "BearerAuth": {
+                    "type": "http",
+                    "scheme": "bearer",
+                    "bearerFormat": "JWT",
+                },
+            },
+        },
+        "SECURITY": [{"BearerAuth": []}],
+    }
 
 # # Cors Allowed Origins
 # CORS_ALLOWED_ORIGINS = os.environ.get(
@@ -342,5 +363,5 @@ redis_url = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
 
 
 # Swagger settings
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
