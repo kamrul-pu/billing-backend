@@ -7,7 +7,7 @@ django-cors-headers
 django-silk
 django-unfold
 djangorestframework
-drf-yasg
+drf-spectacular
 factory_boy
 Faker
 gunicorn
