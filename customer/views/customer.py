@@ -111,7 +111,7 @@ class CustomerDetail(RetrieveUpdateDestroyAPIView):
             Customer()
             .get_all_actives()
             .filter(organization_id=self.request.user.organization_id)
-            .select_related("package", "user", "organization")
+            .select_related("package", "organization")
         )
         return queryset
 
