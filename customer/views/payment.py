@@ -29,13 +29,15 @@ class PaymentsList(ListCreateAPIView):
     # ]  # Only Admin and Manager can create payments
 
     def get_queryset(self):
+        if not self.request.user.organization_id:
+            return Payment.objects.none()
         queryset = (
             Payment()
             .get_all_actives()
             .filter(organization_id=self.request.user.organization_id)
             .select_related("customer", "entry_by")
         )
-
+        
         # Text search filters
         # Individual filters
         paid = self.request.query_params.get("paid", None)
