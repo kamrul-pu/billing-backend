@@ -49,7 +49,7 @@ class PaymentsList(ListCreateAPIView):
         payment_date = self.request.query_params.get("payment_date", None)
 
         # Apply filters
-        if paid is not None:
+        if paid:
             paid = paid.lower() == "true"
             queryset = queryset.filter(paid=paid)
         if month:
