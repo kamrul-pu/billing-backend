@@ -110,7 +110,7 @@ class MeSerializer(serializers.ModelSerializer):
             "email",
             "gender",
             "image",
-            "kind"
+            "kind",
             "created_at",
             "updated_at",
         )
