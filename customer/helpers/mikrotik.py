@@ -83,21 +83,21 @@ class Mikrotik:
             return False, f"Unexpected error: {str(e)}"
 
     @staticmethod
-    def get_user_sessions():
+    def get_user_sessions(organization):
         """
         Get all active PPP sessions.
         :return: tuple(success: bool, sessions_list_or_error: list/str)
         """
         try:
-            url = f"{MIKROTIK_URL}/rest/ppp/active"
+            url = f"{organization.router_ip}/rest/ppp/active"
             response = requests.get(
                 url,
-                auth=(MIKROTIK_USER, MIKROTIK_PASS),
+                auth=(organization.router_username, organization.router_password),
                 # verify=MIKROTIK_VERIFY_SSL,
                 # timeout=REQUEST_TIMEOUT,
                 verify=False,
             )
-
+            print("RRRRR: ", response)
             if response.status_code == 200:
                 return True, response.json()
             else:

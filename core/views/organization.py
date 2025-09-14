@@ -1,5 +1,8 @@
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.views import APIView
 from rest_framework.permissions import SAFE_METHODS
+from rest_framework.response import Response
+from rest_framework import status
 from core.permissions import (
     IsSuperAdminOrReadOnly,
     IsAuthenticated,
@@ -7,6 +10,7 @@ from core.permissions import (
     IsManager,
     IsSuperAdmin,
 )
+from customer.helpers import Mikrotik
 from core.models import Organization
 
 from core.serializers.organization import (
@@ -39,3 +43,22 @@ class OrganizationDetail(RetrieveUpdateDestroyAPIView):
         return [
             (IsAdminUser | IsManager | IsSuperAdmin)()
         ]  # Only Admin and Manager can modify customers
+
+
+
+
+class CustomerSessionList(APIView):
+    permission_classes = [IsAdminUser | IsManager]
+
+    def get(self, request, *args, **kwargs):
+        print("API CALLED")
+        organization = request.user.organization
+        print("Organizaton: ", organization.router_ip, organization.router_username, organization.router_password)
+        if not organization:
+            return Response({"error": "Organization not found."}, status=status.HTTP_404_NOT_FOUND)
+        if not organization.router_ip or not organization.router_username or not organization.router_password:
+            return Response({"error": "Mikrotik credentials not found."}, status=status.HTTP_404_NOT_FOUND)
+        success, sessions = Mikrotik.get_user_sessions(organization)
+        if not success:
+            return Response({"error": sessions}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"sessions": sessions}, status=status.HTTP_200_OK)

@@ -3,7 +3,7 @@ from django.db.models import Q, Count, Sum
 
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 
@@ -292,3 +292,4 @@ class StatusToggle(APIView):
         customer.save(update_fields=["is_active"])
 
         return Response({"message": message}, status=status.HTTP_200_OK)
+
