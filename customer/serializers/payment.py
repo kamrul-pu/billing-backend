@@ -4,6 +4,7 @@ from django.db import transaction
 import logging
 from django.utils import timezone
 from rest_framework import serializers
+from core.views import organization
 from customer.models import Payment, Customer
 from core.serializers.user import UserLiteSerializer
 from customer.serializers.customer import CustomerBase
@@ -105,6 +106,7 @@ class PaymentListSerializer(PaymentBase):
                 payment.transaction_id = str(transaction_id)
                 payment.entry_by = request.user
                 payment.updated_by = request.user
+                payment.organization_id = request.user.organization_id
                 payment.note = f"Payment updated by {request.user.first_name} {request.user.last_name}"
                 payment.save(
                     update_fields=[
@@ -121,6 +123,7 @@ class PaymentListSerializer(PaymentBase):
             else:
                 # Create new payment
                 payment = Payment.objects.create(
+                    organization_id=request.user.organization_id,
                     customer=customer,
                     bill_amount=bill_amount,
                     amount=amount,
