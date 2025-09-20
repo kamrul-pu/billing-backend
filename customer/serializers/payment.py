@@ -64,12 +64,12 @@ class PaymentListSerializer(PaymentBase):
             customer = Customer.objects.select_related("package").get(id=customer_id)
         except Customer.DoesNotExist:
             raise serializers.ValidationError(
-                {"customer_id": "Customer does not exist."}
+                {"message": "Customer does not exist."}
             )
 
         if customer.is_free:
             raise serializers.ValidationError(
-                {"customer_id": "Cannot create payment for free customers."}
+                {"message": "Cannot create payment for free customers."}
             )
 
         try:
@@ -84,12 +84,12 @@ class PaymentListSerializer(PaymentBase):
                 f"Multiple payments found for customer {customer.id} in {validated_data['billing_month']}"
             )
             raise serializers.ValidationError(
-                {"billing_month": "Multiple payments detected. Contact admin."}
+                {"message": "Multiple payments detected. Contact admin."}
             )
 
         if payment and payment.paid:
             raise serializers.ValidationError(
-                {"billing_month": "Payment for this month has already been made."}
+                {"message": "Payment for this month has already been made."}
             )
 
         bill_amount = customer.package.price if customer.package else Decimal("0.00")

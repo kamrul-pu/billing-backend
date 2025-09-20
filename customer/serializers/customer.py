@@ -78,11 +78,11 @@ class CustomerListSerializer(CustomerBase):
             or User.objects.filter(email=email).exists()
         ):
             raise serializers.ValidationError(
-                {"email": "This email is already in use."}
+                {"message": "This email is already in use."}
             )
         if phone and Customer.objects.filter(phone=phone).exists():
             raise serializers.ValidationError(
-                {"phone": "This phone number is already in use."}
+                {"message": "This phone number is already in use."}
             )
         # connection_type = validated_data.get("connection_type", ConnectionType.PPPoE)
         # if username and connection_type == ConnectionType.PPPoE:
@@ -127,12 +127,12 @@ class CustomerListSerializer(CustomerBase):
         organization = self.context["request"].user.organization
         if not organization:
             raise serializers.ValidationError(
-                {"organization": "Organization not found for this user."}
+                {"message": "Organization not found for this user."}
             )
         if organization.allowed_customer <= organization.total_customer:
             raise serializers.ValidationError(
                 {
-                    "organization": "Customer limit exceeded. Please upgrade your plan or contact support."
+                    "message": "Customer limit exceeded. Please upgrade your plan or contact support."
                 }
             )
         organization.total_customer += 1

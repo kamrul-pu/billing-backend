@@ -137,13 +137,11 @@ class LoginSerializer(serializers.Serializer):
         password = attrs.get("password", None)
         if not phone:
             raise serializers.ValidationError(
-                detail="Phone number is required for login",
-                code=status.HTTP_400_BAD_REQUEST,
+                {"message": "Phone number is required for login"}
             )
         if not password:
             raise serializers.ValidationError(
-                detail="A password is requied for login",
-                code=status.HTTP_400_BAD_REQUEST,
+                {"message": "A password is requied for login"}
             )
         # user = authenticate(username=phone, password=password)
         # if user is None:
@@ -162,7 +160,7 @@ class LoginSerializer(serializers.Serializer):
         print("User ", user)
         if not user or not user.check_password(password):
             raise APIException(
-                detail="Invalid Credentials", code=status.HTTP_400_BAD_REQUEST
+                {"message": "Invalid Credentials"}
             )
         if user.is_superuser or user.kind == UserKind.SUPER_ADMIN:
             print("super admin login")
@@ -181,23 +179,20 @@ class LoginSerializer(serializers.Serializer):
             and user.organization.subscription_status != SubscriptionStatus.ACTIVE
         ):
             raise APIException(
-                detail="Your organization is not active. Please contact with support.",
-                code=status.HTTP_400_BAD_REQUEST,
+                {"message": "Your organization is not active. Please contact with support."}
             )
         # print("user organization end date:", user.organization.subscription_end_date)
         # print("user organization:", user.organization)
         if user.organization and not user.organization.subscription_end_date:
             raise APIException(
-                detail="Your organization subscription end date is not set. Please contact with support.",
-                code=status.HTTP_400_BAD_REQUEST,
+                {"message": "Your organization subscription end date is not set. Please contact with support."}
             )
         if (
             user.organization
             and user.organization.subscription_end_date < timezone.now().date()
         ):
             raise APIException(
-                detail="Your organization subscription has expired. Please contact with support.",
-                code=status.HTTP_400_BAD_REQUEST,
+                {"message": "Your organization subscription has expired. Please contact with support."}
             )
 
         return {
