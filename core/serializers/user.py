@@ -1,11 +1,9 @@
 """Serializer for user model."""
 
-from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from rest_framework import status
-from rest_framework import serializers
-from rest_framework.exceptions import APIException
+from rest_framework import status, serializers
 from core.choices import SubscriptionStatus, UserKind
 
 User = get_user_model()
@@ -51,10 +49,9 @@ class UserDetailSerializer(UserListSerializer):
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    # Specify password and confirm_password fields as write_only, meaning they won't be included in responses
     password = serializers.CharField(
         write_only=True,
-        style={"input_type": "password"},  # Styling to indicate it's a password field
+        style={"input_type": "password"},
         trim_whitespace=False,
     )
     confirm_password = serializers.CharField(
@@ -63,19 +60,17 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         trim_whitespace=False,
     )
 
-    # Custom validation for password to check if it matches confirm_password
     def validate_password(self, value):
         password = value
         confirm_password = self.initial_data.get("confirm_password", "")
         if password != confirm_password:
             raise serializers.ValidationError(
-                detail="Password and confirm password don't match!!!",  # Error message
-                code=status.HTTP_400_BAD_REQUEST,  # HTTP status code
+                {"message": "Password and confirm password don't match!!!"}
             )
         return value
 
     class Meta:
-        model = User  # Specify the model for the serializer
+        model = User
         fields = (
             "first_name",
             "last_name",
@@ -85,17 +80,14 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             "image",
             "password",
             "confirm_password",
-        )  # Fields to include in the serialization
+        )
 
-    # Custom create method to handle user creation
     def create(self, validated_data):
-        validated_data.pop(
-            "confirm_password", None
-        )  # Remove confirm_password from validated data
-        user = User(**validated_data)  # Create a new user instance with validated data
-        user.set_password(validated_data.get("password", ""))  # Set user's password
-        user.save()  # Save the user to the database
-        return user  # Return the created user instance
+        validated_data.pop("confirm_password", None)
+        user = User(**validated_data)
+        user.set_password(validated_data.get("password", ""))
+        user.save()
+        return user
 
 
 class MeSerializer(serializers.ModelSerializer):
@@ -133,37 +125,34 @@ class LoginSerializer(serializers.Serializer):
     )
 
     def validate(self, attrs):
-        phone = attrs.get("phone", None)
-        password = attrs.get("password", None)
+        phone = attrs.get("phone")
+        password = attrs.get("password")
+
         if not phone:
             raise serializers.ValidationError(
-                {"message": "Phone number is required for login"}
+                {"message": "Phone number is required for login"},
+                status.HTTP_400_BAD_REQUEST,
             )
+
         if not password:
             raise serializers.ValidationError(
-                {"message": "A password is requied for login"}
+                {"message": "A password is required for login"},
+                status.HTTP_400_BAD_REQUEST,
             )
-        # user = authenticate(username=phone, password=password)
-        # if user is None:
-        #     raise APIException(
-        #         detail="Invalid Credentials", code=status.HTTP_400_BAD_REQUEST
-        #     )
-        # if not user.is_active:
-        #     raise APIException(
-        #         detail="User is not active", code=status.HTTP_400_BAD_REQUEST
-        #     )
+
         user = (
             User.objects.filter(phone=phone, is_active=True)
             .select_related("organization")
             .first()
         )
-        print("User ", user)
+
         if not user or not user.check_password(password):
-            raise APIException(
-                {"message": "Invalid Credentials"}
+            raise serializers.ValidationError(
+                {"message": "Invalid Credentials entered!!!"},
+                status.HTTP_400_BAD_REQUEST,
             )
+
         if user.is_superuser or user.kind == UserKind.SUPER_ADMIN:
-            print("super admin login")
             return {
                 "id": user.id,
                 "uid": str(user.uid),
@@ -174,25 +163,30 @@ class LoginSerializer(serializers.Serializer):
                 "kind": user.kind,
                 "is_superuser": user.is_superuser,
             }
+
         if (
             user.organization
             and user.organization.subscription_status != SubscriptionStatus.ACTIVE
         ):
-            raise APIException(
-                {"message": "Your organization is not active. Please contact with support."}
+            raise serializers.ValidationError(
+                {"message": "Your organization is not active. Please contact support."}
             )
-        # print("user organization end date:", user.organization.subscription_end_date)
-        # print("user organization:", user.organization)
+
         if user.organization and not user.organization.subscription_end_date:
-            raise APIException(
-                {"message": "Your organization subscription end date is not set. Please contact with support."}
+            raise serializers.ValidationError(
+                {
+                    "message": "Your organization subscription end date is not set. Please contact support."
+                }
             )
+
         if (
             user.organization
             and user.organization.subscription_end_date < timezone.now().date()
         ):
-            raise APIException(
-                {"message": "Your organization subscription has expired. Please contact with support."}
+            raise serializers.ValidationError(
+                {
+                    "message": "Your organization subscription has expired. Please contact support."
+                }
             )
 
         return {

@@ -22,7 +22,19 @@ from core.serializers.organization import (
 class OrganizationList(ListCreateAPIView):
     queryset = Organization().get_all_actives()
     serializer_class = OrganizationListSerializer
-    permission_classes = [IsSuperAdminOrReadOnly]
+    # permission_classes = [IsSuperAdminOrReadOnly]
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_superuser or user.kind == "SUPER_ADMIN":
+            return Organization().get_all_actives()
+        return user.organization
+    
+    def get_permissions(self):
+        if self.request.method in SAFE_METHODS:
+            return [(IsAuthenticated)()]
+        return [
+            (IsAdminUser | IsManager | IsSuperAdmin)()
+        ]  # Only Admin and Manager can modify customers
 
 
 class OrganizationDetail(RetrieveUpdateDestroyAPIView):
