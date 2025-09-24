@@ -278,14 +278,16 @@ class StatusToggle(APIView):
         username = serialier.validated_data.get("username")
         is_active = serialier.validated_data.get("is_active")
 
-        customer = Customer.objects.filter(username=username).first()
+        customer = Customer.objects.filter(username=username).select_related("organization").first()
         if not customer:
             return Response(
                 {"error": "Customer not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
+        if not customer.organization:
+            return Response({"message": "Customer does not belongs to an organization"}, status=status.HTTP_400_BAD_REQUEST)
         customer.is_active = is_active
-        success, message = Mikrotik.toggle_ppp_user(username, not is_active)
+        success, message = Mikrotik.toggle_ppp_user(username, not is_active, customer.organization)
         if not success:
             return Response({"error": message}, status=status.HTTP_400_BAD_REQUEST)
 

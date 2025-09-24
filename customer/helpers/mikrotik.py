@@ -140,7 +140,7 @@ class Mikrotik:
             return False
 
     @staticmethod
-    def toggle_ppp_user(username, disable=True):
+    def toggle_ppp_user(username, disable=True, organization=None):
         """
         Enable or disable a PPP user.
         If disabling, also terminate active session.
@@ -180,7 +180,7 @@ class Mikrotik:
 
             # Step 3: If disabling, terminate active session
             if disable:
-                success, sessions = Mikrotik.get_user_sessions()
+                success, sessions = Mikrotik.get_user_sessions(organization)
                 if success:
                     for session in sessions:
                         if session.get("name") == username:
