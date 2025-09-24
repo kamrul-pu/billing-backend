@@ -22,13 +22,14 @@ from core.serializers.organization import (
 class OrganizationList(ListCreateAPIView):
     queryset = Organization().get_all_actives()
     serializer_class = OrganizationListSerializer
+
     # permission_classes = [IsSuperAdminOrReadOnly]
     def get_queryset(self):
         user = self.request.user
         if user.is_superuser or user.kind == "SUPER_ADMIN":
             return Organization().get_all_actives()
-        return user.organization
-    
+        return Organization().get_all_actives().filter(id=user.organization_id)
+
     def get_permissions(self):
         if self.request.method in SAFE_METHODS:
             return [(IsAuthenticated)()]
@@ -47,7 +48,7 @@ class OrganizationDetail(RetrieveUpdateDestroyAPIView):
         user = self.request.user
         if user.is_superuser or user.kind == "SUPER_ADMIN":
             return Organization().get_all_actives()
-        return user.organization
+        return Organization().get_all_actives().filter(id=user.organization_id)
 
     def get_permissions(self):
         if self.request.method in SAFE_METHODS:
@@ -57,19 +58,31 @@ class OrganizationDetail(RetrieveUpdateDestroyAPIView):
         ]  # Only Admin and Manager can modify customers
 
 
-
-
 class CustomerSessionList(APIView):
     permission_classes = [IsAdminUser | IsManager]
 
     def get(self, request, *args, **kwargs):
         print("API CALLED")
         organization = request.user.organization
-        print("Organizaton: ", organization.router_ip, organization.router_username, organization.router_password)
+        print(
+            "Organizaton: ",
+            organization.router_ip,
+            organization.router_username,
+            organization.router_password,
+        )
         if not organization:
-            return Response({"error": "Organization not found."}, status=status.HTTP_404_NOT_FOUND)
-        if not organization.router_ip or not organization.router_username or not organization.router_password:
-            return Response({"error": "Mikrotik credentials not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Organization not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+        if (
+            not organization.router_ip
+            or not organization.router_username
+            or not organization.router_password
+        ):
+            return Response(
+                {"error": "Mikrotik credentials not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         success, sessions = Mikrotik.get_user_sessions(organization)
         if not success:
             return Response({"error": sessions}, status=status.HTTP_400_BAD_REQUEST)
