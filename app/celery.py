@@ -26,12 +26,12 @@ cel_app.config_from_object("django.conf.settings")
 # Auto discover tasks from all registered Django configs
 cel_app.autodiscover_tasks()
 
-# cel_app.conf.beat_schedule = {
-#     'add-every-30-seconds': {
-#         'task': 'customer.tasks.add',
-#         'schedule': 30.0,
-#         'args': (random.randint(1,10), random.randint(11,30))
-#     },
+cel_app.conf.beat_schedule = {
+    'add-every-30-seconds': {
+        'task': 'customer.tasks.add',
+        'schedule': 30.0,
+        'args': (random.randint(1,10), random.randint(11,30))
+    },
 #     # Monthly tasks
 #    'generate-bills-monthly': {
 #        'task': 'customer.tasks.generate_customer_bills',
@@ -51,7 +51,7 @@ cel_app.autodiscover_tasks()
 #        'task': 'customer.tasks.deactivate_due_payment_customers',
 #        'schedule': crontab(minute=0, hour=6, day_of_month=10),
 #    },
-# }
+}
 cel_app.conf.timezone = 'Asia/Dhaka'
 
 @cel_app.task(bind=True)
