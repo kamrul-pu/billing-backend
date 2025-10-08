@@ -37,26 +37,22 @@
 
 services:
   django-web:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: django-web
-    restart: always
     env_file:
       - .env
-    command: ["/app/entrypoint.prod.sh"]
-    volumes:
-      - ./static:/app/staticfiles
-    ports:
-      - "8000:8000"
-    # Uncomment this if you have a DB container
     # depends_on:
     #   - db
+    #   - redis
 
   celery-worker:
-    build: .
-    container_name: celery-worker
-    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: celery -A core worker --loglevel=info
+    depends_on:
+      - django-web
     env_file:
       - .env
-    command: celery -A app worker -l info
-    # depends_on:
-      # - django-web
