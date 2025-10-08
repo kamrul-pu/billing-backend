@@ -47,10 +47,9 @@ services:
       - ./static:/app/staticfiles
     ports:
       - "8000:8000"
-    depends_on:
-      # Add your DB here if needed
-      # - db
-      - celery-worker
+    # Uncomment this if you have a DB container
+    # depends_on:
+    #   - db
 
   celery-worker:
     build: .
@@ -59,7 +58,5 @@ services:
     env_file:
       - .env
     command: celery -A app worker -l info
-    depends_on:
-      # Add your DB here if needed
-      # - db
-      - django-web
+    # depends_on:
+      # - django-web
