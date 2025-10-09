@@ -44,8 +44,8 @@ services:
     image: billing-backend-django:latest  # unified image name
     container_name: django-web
     env_file: .env
-    volumes:
-      - ./static:/app/staticfiles
+    # volumes:
+    #   - ./static:/app/staticfiles
     networks:
       - billing-network
     # environment:
