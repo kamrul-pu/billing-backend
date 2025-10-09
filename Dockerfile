@@ -1,51 +1,35 @@
 # Stage 1: Base build stage
 FROM python:3.13-slim AS builder
- 
-# Create the app directory
+
 RUN mkdir /app
- 
-# Set the working directory
 WORKDIR /app
- 
-# Set environment variables to optimize Python
+
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1 
- 
-# Install dependencies first for caching benefit
-RUN pip install --upgrade pip 
+ENV PYTHONUNBUFFERED=1
+
+RUN pip install --upgrade pip
 COPY requirements/dev.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
- 
-# Stage 2: Production stage
+
+# Stage 2: Production image
 FROM python:3.13-slim
- 
-RUN useradd -m -r appuser && \
-   mkdir /app && \
-   mkdir /app/staticfiles && \
-   chown -R appuser /app
- 
-# Copy the Python dependencies from the builder stage
+
+# Create user and necessary dirs
+RUN useradd -m -r appuser && mkdir -p /app/staticfiles /app && chown -R appuser:appuser /app
+
+# Copy from builder
 COPY --from=builder /usr/local/lib/python3.13/site-packages/ /usr/local/lib/python3.13/site-packages/
 COPY --from=builder /usr/local/bin/ /usr/local/bin/
- 
-# Set the working directory
-WORKDIR /app
- 
-# Copy application code
-COPY --chown=appuser:appuser . .
- 
-# Set environment variables to optimize Python
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1 
- 
-# Switch to non-root user
-USER appuser
- 
-# Expose the application port
-EXPOSE 8001 
 
-# Make entry file executable
-RUN chmod +x  /app/entrypoint.prod.sh
- 
-# Start the application using Gunicorn
+WORKDIR /app
+
+# Copy project code as appuser
+COPY --chown=appuser:appuser . .
+
+RUN chmod +x /app/entrypoint.prod.sh
+
+USER appuser
+
+EXPOSE 8001
+
 CMD ["/app/entrypoint.prod.sh"]
