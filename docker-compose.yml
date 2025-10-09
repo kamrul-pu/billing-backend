@@ -61,7 +61,7 @@ services:
     #   - CELERY_BROKER_URL=redis://redis:6379/0
     #   - CELERY_RESULT_BACKEND=redis://redis:6379/0
     ports:
-      - "8000:8000"
+      - "800:8001"
     restart: unless-stopped
 
   # Celery worker using the same Django image
@@ -70,8 +70,8 @@ services:
     container_name: celery-worker
     command: celery -A app worker -l info
     env_file: .env
-    volumes:
-      - ./static:/app/staticfiles
+    # volumes:
+    #   - ./static:/app/staticfiles
     networks:
       - billing-network
     depends_on:
