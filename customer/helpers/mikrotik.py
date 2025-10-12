@@ -191,7 +191,7 @@ class Mikrotik:
                                 print(
                                     f"[Mikrotik] Warning: Could not terminate session for '{username}'"
                                 )
-                    print("sessions not available for the user")
+                    # print("sessions not available for the user")
                 else:
                     print(
                         f"[Mikrotik] Warning: Could not fetch active sessions: {sessions}"

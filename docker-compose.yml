@@ -64,25 +64,25 @@ services:
       - "8000:8000"
     restart: unless-stopped
 
-  # Celery worker using the same Django image
-  celery-worker:
-    image: billing-backend-django:latest  # same image
-    container_name: celery-worker
-    command: celery -A app worker -l info
-    env_file: .env
-    volumes:
-      - ./static:/app/staticfiles
-    networks:
-      - billing-network
-    depends_on:
-      - django-web
-    # environment:
-    #   - DATABASE_URL=${DATABASE_URL}
-    #   - SECRET_KEY=${SECRET_KEY}
-    #   - DEBUG=${DEBUG}
-    #   - CELERY_BROKER_URL=redis://redis:6379/0
-    #   - CELERY_RESULT_BACKEND=redis://redis:6379/0
-    restart: unless-stopped
+  # # Celery worker using the same Django image
+  # celery-worker:
+  #   image: billing-backend-django:latest  # same image
+  #   container_name: celery-worker
+  #   command: celery -A app worker -l info
+  #   env_file: .env
+  #   volumes:
+  #     - ./static:/app/staticfiles
+  #   networks:
+  #     - billing-network
+  #   depends_on:
+  #     - django-web
+  #   # environment:
+  #   #   - DATABASE_URL=${DATABASE_URL}
+  #   #   - SECRET_KEY=${SECRET_KEY}
+  #   #   - DEBUG=${DEBUG}
+  #   #   - CELERY_BROKER_URL=redis://redis:6379/0
+  #   #   - CELERY_RESULT_BACKEND=redis://redis:6379/0
+  #   restart: unless-stopped
 
 networks:
   billing-network:

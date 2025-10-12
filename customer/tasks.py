@@ -1,8 +1,10 @@
 from celery import shared_task
 from django.utils import timezone
 
+from core.models import Organization
 from customer.models import Customer, Payment
 from customer.utils import toggle_ppp_user
+from customer.helpers import Mikrotik
 
 
 @shared_task
@@ -49,18 +51,26 @@ def generate_customer_bills():
 @shared_task
 def deactivate_due_payment_customers():
     month = timezone.now().strftime("%B").upper()
+    organization = Organization.objects.filter(id=1).first()
+    if not organization:
+        print("No organization found with ID 1.")
+        return
     payments = (
         Payment()
         .get_all_actives()
-        .filter(billing_month=month, paid=False)
+        .filter(billing_month=month, paid=False, organization_id=organization.id)
         .select_related("customer")
     )
+
     customers_to_update = []
     for payment in payments:
         customer = payment.customer
         if customer.is_active and not customer.is_free:
-        # Deactive the customer
-            success, msg = toggle_ppp_user(username=customer.username, disable=True)
+            print(f"Deactivating customer: {customer.username} for unpaid bill.")
+            # Deactive the customer
+            success, msg = Mikrotik.toggle_ppp_user(
+                username=customer.username, disable=True, organization=organization
+            )
             if success:
                 customer.is_active = False
                 customers_to_update.append(customer)
@@ -68,5 +78,5 @@ def deactivate_due_payment_customers():
                 print(f"Error Message: ", msg)
 
     if customers_to_update:
-        Customer.objects.bulk_update(customers_to_update)
+        Customer.objects.bulk_update(customers_to_update, fields=["is_active"])
         print("Customer updated successfully!")

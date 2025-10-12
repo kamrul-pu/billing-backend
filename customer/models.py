@@ -153,13 +153,17 @@ class Payment(NameDescriptionBaseModel):
         ordering = ["-created_at"]
 
 
-# @receiver(pre_save, sender=Customer)
-# def customer_status_toggle(sender, instance, **kwargs):
-#     if instance.pk:
-#         try:
-#             old_instance = sender.objects.get(pk=instance.pk)
-#             if old_instance.is_active != instance.is_active:
-#                 print("Signal: Toggling user status in MikroTik")
-#                 Mikrotik.toggle_ppp_user(instance.username, not instance.is_active)
-#         except sender.DoesNotExist:
-#             pass  #
+@receiver(pre_save, sender=Customer)
+def customer_status_toggle(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            old_instance = sender.objects.get(pk=instance.pk)
+            if old_instance.is_active != instance.is_active:
+                print("Signal: Toggling user status in MikroTik")
+                result, msg = Mikrotik.toggle_ppp_user(
+                    instance.username, not instance.is_active, instance.organization
+                )
+                print("Result:", result, "Message:", msg)
+
+        except sender.DoesNotExist:
+            pass  #
