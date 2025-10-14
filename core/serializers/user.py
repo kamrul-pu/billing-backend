@@ -63,7 +63,7 @@ class UserListSerializer(serializers.ModelSerializer):
         user.set_password(validated_data.get("password", ""))
         user.organization_id = self.context["request"].user.organization_id
         user.save()
-        return super().create(validated_data)
+        return user
 
 
 class UserDetailSerializer(UserListSerializer):
