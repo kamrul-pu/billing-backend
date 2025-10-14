@@ -19,6 +19,26 @@ class UserLiteSerializer(serializers.ModelSerializer):
 
 
 class UserListSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(
+        write_only=True,
+        style={"input_type": "password"},
+        trim_whitespace=False,
+    )
+    confirm_password = serializers.CharField(
+        write_only=True,
+        style={"input_type": "password"},
+        trim_whitespace=False,
+    )
+
+    def validate_password(self, value):
+        password = value
+        confirm_password = self.initial_data.get("confirm_password", "")
+        if password != confirm_password:
+            raise serializers.ValidationError(
+                {"message": "Password and confirm password don't match!!!"}
+            )
+        return value
+
     class Meta:
         model = User
         fields = (
@@ -31,11 +51,18 @@ class UserListSerializer(serializers.ModelSerializer):
             "gender",
             "kind",
             "image",
+            "password",
+            "confirm_password",
         )
         read_only_fields = ("id", "uid")
 
     def create(self, validated_data):
-        validated_data["organization_id"] = self.context["request"].user.organization_id
+        # validated_data["organization_id"] = self.context["request"].user.organization_id
+        validated_data.pop("confirm_password", None)
+        user = User(**validated_data)
+        user.set_password(validated_data.get("password", ""))
+        user.organization_id = self.context["request"].user.organization_id
+        user.save()
         return super().create(validated_data)
 
 
