@@ -1,17 +1,13 @@
 #!/bin/bash
 
-# Ensure staticfiles dir is writable
 echo "Fixing permissions for /app/staticfiles..."
-chown -R appuser:appuser /app/staticfiles
+chmod -R 777 /app/staticfiles || true
 
-# Run migrations
 echo "Running migrations..."
 python manage.py migrate --noinput
 
-# Collect static files
 echo "Collecting static files..."
 python manage.py collectstatic --noinput
 
-# Start Gunicorn
 echo "Starting Gunicorn..."
-gunicorn app.wsgi:application --bind 0.0.0.0:8000 --workers 3 --threads 3
+exec gunicorn app.wsgi:application --bind 0.0.0.0:8000 --workers 3 --threads 3
