@@ -49,56 +49,50 @@
 # # Start the application using Gunicorn
 # CMD ["/app/entrypoint.prod.sh"]
 
-# Stage 1: Build dependencies
+# Stage 1: Builder
 FROM python:3.13-slim AS builder
 
-# Create app dir
 WORKDIR /app
 
-# Prevent Python writing .pyc files
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-# Upgrade pip and install deps
 RUN pip install --upgrade pip
 
 COPY requirements/dev.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Stage 2: Production image
+# Copy source code
+COPY . .
+
+# Create staticfiles dir and collect static at build time
+RUN mkdir -p /app/staticfiles
+RUN python manage.py collectstatic --noinput
+
+# Stage 2: Production
 FROM python:3.13-slim
 
-# Create appuser and dirs
-RUN useradd -m -r appuser && \
-    mkdir -p /app/staticfiles && \
-    mkdir -p /app && \
-    chown -R appuser:appuser /app
+# Create non-root user
+RUN useradd -m -r appuser
 
-# Set working directory
 WORKDIR /app
 
-# Copy Python dependencies from builder
+# Copy dependencies
 COPY --from=builder /usr/local/lib/python3.13/site-packages/ /usr/local/lib/python3.13/site-packages/
 COPY --from=builder /usr/local/bin/ /usr/local/bin/
 
-# Copy app code with correct ownership
-COPY --chown=appuser:appuser . .
+# Copy entire app (including pre-collected staticfiles)
+COPY --from=builder --chown=appuser:appuser /app /app
 
-# Ensure permissions on staticfiles dir
-RUN chown -R appuser:appuser /app/staticfiles
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-# Set env vars
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
-# Switch to non-root user
 USER appuser
 
-# Expose port
 EXPOSE 8000
 
-# Make entrypoint script executable
+# Simplified entrypoint (no collectstatic!)
+COPY --chown=appuser:appuser entrypoint.prod.sh /app/entrypoint.prod.sh
 RUN chmod +x /app/entrypoint.prod.sh
 
-# Start the app
 CMD ["/app/entrypoint.prod.sh"]

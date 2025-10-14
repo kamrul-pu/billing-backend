@@ -1,13 +1,5 @@
-#!/bin/bash
+# #!/usr/bin/env bash
 
-echo "Fixing permissions for /app/staticfiles..."
-chmod -R 777 /app/staticfiles || true
-
-echo "Running migrations..."
+# python manage.py collectstatic --noinput
 python manage.py migrate --noinput
-
-echo "Collecting static files..."
-python manage.py collectstatic --noinput
-
-echo "Starting Gunicorn..."
-exec gunicorn app.wsgi:application --bind 0.0.0.0:8000 --workers 3 --threads 3
+gunicorn --bind 0.0.0.0:8000 --workers 3 --threads 2 app.wsgi:application
