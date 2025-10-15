@@ -36,11 +36,10 @@ class PackageList(ListCreateAPIView):
         return [(IsAdminUser | IsManager | IsStaff)()]
 
     def get_queryset(self):
-        queryset = (
-            Package()
-            .get_all_actives()
-            .filter(organization_id=self.request.user.organization_id)
-        )
+        user = self.request.user
+        queryset = Package().get_all_actives()
+        if user:
+            queryset = queryset.filter(organization_id=user.organization_id)
         return queryset
 
 
@@ -59,11 +58,10 @@ class PackageDetail(RetrieveUpdateDestroyAPIView):
         return [(IsAdminUser | IsManager)()]
 
     def get_queryset(self):
-        queryset = (
-            Package()
-            .get_all_actives()
-            .filter(organization_id=self.request.user.organization_id)
-        )
+        user = self.request.user
+        queryset = Package().get_all_actives()
+        if user:
+            queryset = queryset.filter(organization_id=user.organization_id)
         return queryset
 
 
