@@ -28,6 +28,7 @@ from core.serializers.user import (
     UserRegistrationSerializer,
     MeSerializer,
     LoginSerializer,
+    UserPasswordForceResetSerializer,
 )
 from core.permissions import (
     AllowAny,
@@ -48,10 +49,7 @@ class UserList(ListCreateAPIView):
     queryset = User().get_all_actives()
 
     def get_queryset(self):
-        if (
-            self.request.user.is_superuser
-            or self.request.user.kind == UserKind.SUPER_ADMIN
-        ):
+        if self.request.user.is_superuser or self.request.user.is_superuser:
             return User().get_all_actives()
         elif (
             self.request.user.kind == UserKind.ADMIN
@@ -72,10 +70,7 @@ class UserDetail(RetrieveUpdateDestroyAPIView):
     lookup_field = "uid"
 
     def get_queryset(self):
-        if (
-            self.request.user.is_superuser
-            or self.request.user.kind == UserKind.SUPER_ADMIN
-        ):
+        if self.request.user.is_superuser or self.request.user.is_superuser:
             return User().get_all_actives()
         elif (
             self.request.user.kind == UserKind.ADMIN
@@ -87,6 +82,38 @@ class UserDetail(RetrieveUpdateDestroyAPIView):
                 .filter(organization_id=self.request.user.organization_id)
             )
         return User().get_all_actives().filter(id=self.request.user.id)
+
+
+class ForceResetUserPassword(APIView):
+    permission_classes = (IsAdminUser,)
+    serializer_class = UserPasswordForceResetSerializer
+
+    def get_queryset(self):
+        if self.request.user.is_superuser or self.request.user.is_superuser:
+            return User().get_all_actives()
+        return (
+            User()
+            .get_all_actives()
+            .filter(organization_id=self.request.user.organization_id)
+        )
+
+    def post(self, request, uid):
+        try:
+            user = self.get_queryset().get(uid=uid)
+        except User.DoesNotExist:
+            return Response(
+                {"error": "User not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            password = serializer.validated_data["password"]
+            user.set_password(password)
+            user.save()
+            return Response(
+                {"message": "Password has been reset successfully."},
+                status=status.HTTP_200_OK,
+            )
 
 
 class UserRegistration(CreateAPIView):

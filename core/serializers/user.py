@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from rest_framework import status, serializers
+from rest_framework.exceptions import APIException
 from core.choices import SubscriptionStatus, UserKind
 
 User = get_user_model()
@@ -115,6 +116,28 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user.set_password(validated_data.get("password", ""))
         user.save()
         return user
+
+
+class UserPasswordForceResetSerializer(serializers.Serializer):
+    password = serializers.CharField(
+        write_only=True,
+        style={"input_type": "password"},
+        trim_whitespace=False,
+    )
+    confirm_password = serializers.CharField(
+        write_only=True,
+        style={"input_type": "password"},
+        trim_whitespace=False,
+    )
+
+    def validate_password(self, value):
+        password = value
+        confirm_password = self.initial_data.get("confirm_password", "")
+        if password != confirm_password:
+            raise serializers.ValidationError(
+                {"message": "Password and confirm password don't match!!!"}
+            )
+        return value
 
 
 class MeSerializer(serializers.ModelSerializer):

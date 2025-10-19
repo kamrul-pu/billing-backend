@@ -9,11 +9,17 @@ from core.views.user import (
     UserRegistration,
     UserLogin,
     UserLoginRefresh,
+    ForceResetUserPassword,
 )
 
 urlpatterns = [
     path("", UserList.as_view(), name="user-list"),
     path("/<uuid:uid>", UserDetail.as_view(), name="user-details"),
+    path(
+        "/<uuid:uid>/force-reset-password",
+        ForceResetUserPassword.as_view(),
+        name="force-reset-password",
+    ),
     path("/register", UserRegistration.as_view(), name="user-registration"),
     path("/me", MeDetail.as_view(), name="me-detail"),
     path("/login", UserLogin.as_view(), name="user-login"),
