@@ -29,6 +29,8 @@ from core.serializers.user import (
     MeSerializer,
     LoginSerializer,
     UserPasswordForceResetSerializer,
+    ForgetPasswordSerializer,
+    ChangePasswordSerializer,
 )
 from core.permissions import (
     AllowAny,
@@ -112,6 +114,46 @@ class ForceResetUserPassword(APIView):
             user.save()
             return Response(
                 {"message": "Password has been reset successfully."},
+                status=status.HTTP_200_OK,
+            )
+
+
+class UserForgetPassword(APIView):
+    permission_classes = (AllowAny,)
+    serializer_class = ForgetPasswordSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            phone = serializer.validated_data["phone"]
+            # Logic to handle forget password (e.g., send reset link to email)
+            return Response(
+                {"message": "If the email exists, a reset link has been sent."},
+                status=status.HTTP_200_OK,
+            )
+
+
+class ChangeUserPassword(APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ChangePasswordSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            old_password = serializer.validated_data["old_password"]
+            new_password = serializer.validated_data["new_password"]
+
+            user = request.user
+            if not user.check_password(old_password):
+                return Response(
+                    {"error": "Old password is incorrect."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            user.set_password(new_password)
+            user.save()
+            return Response(
+                {"message": "Password has been changed successfully."},
                 status=status.HTTP_200_OK,
             )
 

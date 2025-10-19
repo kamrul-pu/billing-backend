@@ -140,6 +140,76 @@ class UserPasswordForceResetSerializer(serializers.Serializer):
         return value
 
 
+class ForgetPasswordSerializer(serializers.Serializer):
+    phone = serializers.CharField(required=True)
+    otp = serializers.CharField(required=False, allow_blank=True, max_length=6)
+    password = serializers.CharField(
+        write_only=True,
+        style={"input_type": "password"},
+        trim_whitespace=False,
+        required=False,
+    )
+    confirm_password = serializers.CharField(
+        write_only=True,
+        style={"input_type": "password"},
+        trim_whitespace=False,
+        required=False,
+    )
+
+    def validate(self, attrs):
+        phone = attrs.get("phone")
+        otp = attrs.get("otp")
+        password = attrs.get("password")
+        confirm_password = attrs.get("confirm_password")
+
+        if not phone:
+            raise serializers.ValidationError(
+                {"message": "Phone number is required."},
+                status.HTTP_400_BAD_REQUEST,
+            )
+
+        if otp:
+            if not password or not confirm_password:
+                raise serializers.ValidationError(
+                    {"message": "Password and confirm password are required."},
+                    status.HTTP_400_BAD_REQUEST,
+                )
+            if password != confirm_password:
+                raise serializers.ValidationError(
+                    {"message": "Password and confirm password don't match!!!"},
+                    status.HTTP_400_BAD_REQUEST,
+                )
+
+        return attrs
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(
+        write_only=True,
+        style={"input_type": "password"},
+        trim_whitespace=False,
+    )
+    new_password = serializers.CharField(
+        write_only=True,
+        style={"input_type": "password"},
+        trim_whitespace=False,
+    )
+    confirm_new_password = serializers.CharField(
+        write_only=True,
+        style={"input_type": "password"},
+        trim_whitespace=False,
+    )
+
+    def validate_new_password(self, value):
+        new_password = value
+        confirm_new_password = self.initial_data.get("confirm_new_password", "")
+        if new_password != confirm_new_password:
+            raise serializers.ValidationError(
+                {"message": "New password and confirm new password don't match!!!"}
+            )
+        return value
+
+
 class MeSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
