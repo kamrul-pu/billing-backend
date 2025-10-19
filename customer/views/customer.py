@@ -171,7 +171,7 @@ class GenerateBill(APIView):
         customers_to_bill = [
             c for c in active_customers if c.id not in paid_customer_ids
         ]
-
+        messages = []
         # Step 4: Create payment records in bulk
         payments_to_create = []
         for customer in customers_to_bill:

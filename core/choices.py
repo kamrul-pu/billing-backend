@@ -36,3 +36,9 @@ class RouterType(TextChoices):
     UBIQUITI = "UBIQUITI", "Ubiquiti"
     CISCO = "CISCO", "Cisco"
     OTHER = "OTHER", "Other"
+
+
+class OTPType(TextChoices):
+    FORGOT_PASSWORD = "FORGOT_PASSWORD", "Forgot Password"
+    USER_VERIFICATION = "USER_VERIFICATION", "User Verification"
+    TRANSACTION_VERIFICATION = "TRANSACTION_VERIFICATION", "Transaction Verification"

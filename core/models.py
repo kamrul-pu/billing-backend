@@ -9,7 +9,13 @@ from django.db import models
 
 from common.models import BaseModelWithUID, NameDescriptionBaseModel
 
-from core.choices import UserKind, UserGender, SubscriptionType, SubscriptionStatus
+from core.choices import (
+    UserKind,
+    UserGender,
+    SubscriptionType,
+    SubscriptionStatus,
+    OTPType,
+)
 from core.utils import get_user_media_path_prefix
 
 
@@ -189,3 +195,28 @@ class User(AbstractBaseUser, BaseModelWithUID):
     class Meta:
         verbose_name = "System User"
         verbose_name_plural = "System Users"
+
+
+class OTP(BaseModelWithUID):
+    """Model to store OTPs for user verification."""
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="otps",
+    )
+    code = models.CharField(max_length=6)
+    is_used = models.BooleanField(default=False)
+    otp_type = models.CharField(
+        max_length=30,
+        choices=OTPType.choices,
+        default=OTPType.FORGOT_PASSWORD,
+    )
+
+    def __str__(self):
+        return f"OTP for {self.user.phone} - {'Used' if self.is_used else 'Unused'}"
+
+    class Meta:
+        verbose_name = "OTP"
+        verbose_name_plural = "OTPs"
+        ordering = ["-created_at"]

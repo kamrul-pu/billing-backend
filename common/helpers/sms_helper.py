@@ -3,7 +3,7 @@ import json
 
 SMS_URL: str = "http://bulksmsbd.net/api"
 SMS_API_KEY: str = "REaJMMMxbc00PNs9N9xH"
-SMS_SENDER_ID: str = "Random"  # Replace with your sender ID
+SMS_SENDER_ID: str = "8809617629227"  # Replace with your sender ID
 
 
 class SMS:
