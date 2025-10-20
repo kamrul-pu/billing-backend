@@ -41,6 +41,7 @@ from core.permissions import (
     IsStaff,
 )
 from core.choices import UserKind
+from core.utils import generate_unique_otp
 
 User = get_user_model()
 
@@ -125,12 +126,101 @@ class UserForgetPassword(APIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            phone = serializer.validated_data["phone"]
-            # Logic to handle forget password (e.g., send reset link to email)
-            return Response(
-                {"message": "If the email exists, a reset link has been sent."},
-                status=status.HTTP_200_OK,
-            )
+            phone = serializer.validated_data.get("phone", None)
+            new_password = serializer.validated_data.get("password", None)
+            otp = serializer.validated_data.get("otp", None)
+
+            try:
+                # Check if a user with the provided phone number exists
+                user = User().get_all_actives().get(phone=phone)
+            except User.DoesNotExist:
+                return Response(
+                    {"detail": "Person with the provided phone number does not exist."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            if not otp:
+                # Check if there is an existing OTP created in the last 5 minutes
+                five_minutes_ago = datetime.now() - timedelta(minutes=5)
+                existing_otp = OTP.objects.filter(
+                    user_id=user.id,
+                    type=OtpType.PASSWORD_RESET,
+                    is_used=False,
+                    created_at__gte=five_minutes_ago,
+                ).exists()
+
+                if existing_otp:
+                    # User already has a valid OTP created in the last 5 minutes
+                    return Response(
+                        {
+                            "detail": "You already have an OTP. Please wait for the message."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                else:
+                    # Generate a new OTP and send it to the user's phone
+                    otp = generate_unique_otp()
+                    OTP.objects.create(
+                        user_id=user.id, otp=otp, type=OtpType.PASSWORD_RESET
+                    )
+                    # sending sms
+                    # message = f"Your otp is {otp}."
+                    # send_sms(user.phone_number, message)
+
+                    # Return a response indicating that OTP will be sent to the user's phone
+                    return Response(
+                        {"detail": "OTP has sent to your phone number.", "code": "OTP"},
+                        status=status.HTTP_200_OK,
+                    )
+
+            elif new_password:
+                try:
+                    # Verify the OTP provided by the user
+                    otp_record = OTP.objects.get(
+                        user_id=user.id,
+                        otp=otp,
+                        is_used=False,
+                        type=OtpType.PASSWORD_RESET,
+                    )
+                except OTP.DoesNotExist:
+                    return Response(
+                        {"detail": "Invalid OTP."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                if timezone.now() < (otp_record.created_at + timedelta(minutes=5)):
+                    # Update the user's password
+                    user.password = make_password(new_password)
+                    user.save(update_fields=["password"])
+
+                    # Mark the OTP as used
+                    otp_record.is_used = True
+                    otp_record.save(update_fields=["is_used"])
+
+                    PasswordReset.objects.create(
+                        user_id=user.id,
+                        phone=user.phone_number,
+                        reset_status=ResetStatus.SUCCESS,
+                        otp_id=otp_record.id,
+                        type=ResetType.SELF,
+                    )
+
+                    return Response(
+                        {"detail": "Password reset successfully done"},
+                        status=status.HTTP_200_OK,
+                    )
+
+                else:
+                    return Response(
+                        {"detail": "OTP has expired."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+            else:
+                return Response(
+                    {"detail": "Please provide new password and confirm password"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
 
 class ChangeUserPassword(APIView):

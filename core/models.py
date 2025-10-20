@@ -210,7 +210,7 @@ class OTP(BaseModelWithUID):
     otp_type = models.CharField(
         max_length=30,
         choices=OTPType.choices,
-        default=OTPType.FORGOT_PASSWORD,
+        default=OTPType.PASSWORD_RESET,
     )
 
     def __str__(self):

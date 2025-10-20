@@ -39,6 +39,7 @@ class RouterType(TextChoices):
 
 
 class OTPType(TextChoices):
-    FORGOT_PASSWORD = "FORGOT_PASSWORD", "Forgot Password"
-    USER_VERIFICATION = "USER_VERIFICATION", "User Verification"
-    TRANSACTION_VERIFICATION = "TRANSACTION_VERIFICATION", "Transaction Verification"
+    PASSWORD_RESET = "PASSWORD_RESET", "Password_Reset"
+    USER_VERIFICATION = "USER_VERIFICATION", "User_Verification"
+    TRANSACTION_VERIFICATION = "TRANSACTION_VERIFICATION", "Transaction_Verification"
+    OTHER = "OTHER", "Other"
