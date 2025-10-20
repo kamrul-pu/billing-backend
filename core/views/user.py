@@ -1,7 +1,8 @@
 """Views for Users."""
 
+from datetime import timedelta
 from django.contrib.auth import get_user_model
-
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.response import Response
@@ -40,7 +41,8 @@ from core.permissions import (
     IsManager,
     IsStaff,
 )
-from core.choices import UserKind
+from core.choices import UserKind, OTPType
+from core.models import OTP
 from core.utils import generate_unique_otp
 
 User = get_user_model()
@@ -141,10 +143,10 @@ class UserForgetPassword(APIView):
 
             if not otp:
                 # Check if there is an existing OTP created in the last 5 minutes
-                five_minutes_ago = datetime.now() - timedelta(minutes=5)
+                five_minutes_ago = timezone.now() - timedelta(minutes=5)
                 existing_otp = OTP.objects.filter(
                     user_id=user.id,
-                    type=OtpType.PASSWORD_RESET,
+                    type=OTPType.PASSWORD_RESET,
                     is_used=False,
                     created_at__gte=five_minutes_ago,
                 ).exists()
@@ -162,7 +164,7 @@ class UserForgetPassword(APIView):
                     # Generate a new OTP and send it to the user's phone
                     otp = generate_unique_otp()
                     OTP.objects.create(
-                        user_id=user.id, otp=otp, type=OtpType.PASSWORD_RESET
+                        user_id=user.id, otp=otp, type=OTPType.PASSWORD_RESET
                     )
                     # sending sms
                     # message = f"Your otp is {otp}."
@@ -181,7 +183,7 @@ class UserForgetPassword(APIView):
                         user_id=user.id,
                         otp=otp,
                         is_used=False,
-                        type=OtpType.PASSWORD_RESET,
+                        type=OTPType.PASSWORD_RESET,
                     )
                 except OTP.DoesNotExist:
                     return Response(
@@ -191,20 +193,13 @@ class UserForgetPassword(APIView):
 
                 if timezone.now() < (otp_record.created_at + timedelta(minutes=5)):
                     # Update the user's password
-                    user.password = make_password(new_password)
+                    # user.password = make_password(new_password)
+                    user.set_password(new_password)
                     user.save(update_fields=["password"])
 
                     # Mark the OTP as used
                     otp_record.is_used = True
                     otp_record.save(update_fields=["is_used"])
-
-                    PasswordReset.objects.create(
-                        user_id=user.id,
-                        phone=user.phone_number,
-                        reset_status=ResetStatus.SUCCESS,
-                        otp_id=otp_record.id,
-                        type=ResetType.SELF,
-                    )
 
                     return Response(
                         {"detail": "Password reset successfully done"},
@@ -258,8 +253,20 @@ class MeDetail(RetrieveUpdateAPIView):
     permission_classes = (IsAuthenticated,)
     serializer_class = MeSerializer
 
-    def get_object(self):
-        return self.request.user
+    # def get_object(self):
+    #     return self.request.user
+    def get(self, request, *args, **kwargs):
+        user_id = request.user.id
+        user = (
+            User()
+            .get_all_actives()
+            .filter(id=user_id)
+            .select_related("organization")
+            .first()
+        )
+
+        serializer = self.serializer_class(request.user)
+        return Response(serializer.data)
 
 
 class UserLogin(APIView):

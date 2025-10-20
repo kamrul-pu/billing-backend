@@ -6,6 +6,7 @@ from django.utils import timezone
 from rest_framework import status, serializers
 from rest_framework.exceptions import APIException
 from core.choices import SubscriptionStatus, UserKind
+from core.serializers.organization import OrganizationLiteSerializer
 
 User = get_user_model()
 
@@ -211,6 +212,8 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 class MeSerializer(serializers.ModelSerializer):
+    organization = OrganizationLiteSerializer(read_only=True)
+
     class Meta:
         model = User
         fields = (
@@ -225,6 +228,7 @@ class MeSerializer(serializers.ModelSerializer):
             "kind",
             "created_at",
             "updated_at",
+            "organization",
         )
         read_only_fields = (
             "id",

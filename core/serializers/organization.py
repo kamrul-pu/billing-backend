@@ -23,6 +23,19 @@ class OrganizationBase(serializers.ModelSerializer):
         read_only_fields = ("id", "uid", "subscription_end_date", "logo")
 
 
+class OrganizationLiteSerializer(serializers.Serializer):
+    uid = serializers.UUIDField()
+    name = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    phone = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
+    subscription_status = serializers.CharField(
+        max_length=20, required=False, allow_blank=True
+    )
+    subscription_end_date = serializers.DateField(required=False, allow_null=True)
+    allowed_customer = serializers.IntegerField(required=False, allow_null=True)
+    total_customer = serializers.IntegerField(required=False, allow_null=True)
+
+
 class OrganizationListSerializer(OrganizationBase):
     class Meta(OrganizationBase.Meta):
         fields = OrganizationBase.Meta.fields + ()
