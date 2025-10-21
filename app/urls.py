@@ -16,13 +16,14 @@ SWAGGER_BASE_URL = "https://api.mikrolink.artsensebd.com"
 
 
 def health_check(request):
-    """Health check endpoint for Docker."""
-    return JsonResponse({"status": "healthy", "service": "django-backend"})
+    """Health check endpoint for Docker and load balancers."""
+    return JsonResponse({"status": "healthy", "service": "billing-backend"})
 
 
 urlpatterns = [
-    # Health check endpoint
+    # Health check endpoints
     path("", health_check, name="health-check"),
+    path("health/", health_check, name="health-check-dedicated"),
     path("admin/", admin.site.urls),
     # include subscription endpoints
     path(

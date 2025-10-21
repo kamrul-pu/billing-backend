@@ -1,0 +1,57 @@
+# Coolify-specific Docker Compose configuration
+# This file is optimized for Coolify deployment
+
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: billing-backend-web
+    command: /app/entrypoint.prod.sh
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    environment:
+      - DEBUG=False
+      - DJANGO_SETTINGS_MODULE=app.settings
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - coolify
+
+  nginx:
+    image: nginx:alpine
+    container_name: billing-backend-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - static_volume:/static:ro
+      - media_volume:/media:ro
+      - ./nginx:/etc/nginx/conf.d:ro
+    depends_on:
+      web:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - coolify
+
+volumes:
+  static_volume:
+  media_volume:
+
+networks:
+  coolify:
+    external: true

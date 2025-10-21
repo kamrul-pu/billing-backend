@@ -69,9 +69,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 # Install only runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
+    curl \
     && rm -rf /var/lib/apt/lists/* \
     && useradd -m -r appuser \
-    && mkdir -p /app \
+    && mkdir -p /app/staticfiles \
     && chown -R appuser /app
 
 # Copy only the installed packages from builder
@@ -84,6 +85,9 @@ COPY --chown=appuser:appuser . .
 # Set permissions and switch to non-root user
 RUN chmod +x /app/entrypoint.prod.sh
 USER appuser
+
+# Collect static files during build
+RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
 CMD ["/app/entrypoint.prod.sh"]
