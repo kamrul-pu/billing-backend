@@ -104,7 +104,7 @@ services:
     image: nginx:latest
     container_name: billing-backend-nginx
     ports:
-      - "8000:80"
+      - "8080:80"
     volumes:
       - static_volume:/static
       - ./nginx:/etc/nginx/conf.d:ro  # ✅ MOUNT DIRECTORY INSTEAD OF SINGLE FILE
