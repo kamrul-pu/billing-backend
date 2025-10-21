@@ -7,7 +7,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
 from unfold.admin import ModelAdmin
 
-from core.models import User, Organization, Subscription
+from core.models import User, Organization, Subscription, OTP
 
 
 class UserAdmin(BaseUserAdmin, ModelAdmin):
@@ -102,3 +102,12 @@ class OrganizationAdmin(ModelAdmin):
 
 
 admin.site.register(Organization, OrganizationAdmin)
+
+
+class OTPAdmin(ModelAdmin):
+    list_display = ["id", "otp_type", "is_used", "created_at"]
+    list_filter = ("otp_type", "is_used")
+    ordering = ("-pk",)
+
+
+admin.site.register(OTP, OTPAdmin)

@@ -1,5 +1,7 @@
 """Utils functions for core app."""
 
+import random
+
 
 # Media File Prefixes
 def get_user_media_path_prefix(instance, filename):

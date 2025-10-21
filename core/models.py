@@ -15,6 +15,7 @@ from core.choices import (
     SubscriptionType,
     SubscriptionStatus,
     OTPType,
+    BillingCycle,
 )
 from core.utils import get_user_media_path_prefix
 
@@ -74,6 +75,11 @@ class Organization(NameDescriptionBaseModel):
     logo = models.ImageField(upload_to="organizations/", blank=True)
     allowed_customer = models.IntegerField(default=0)
     total_customer = models.IntegerField(default=0)
+    billing_cycle = models.CharField(
+        max_length=20,
+        choices=BillingCycle.choices,
+        default=BillingCycle.MONTHLY,
+    )
 
     def __str__(self):
         return self.name
@@ -219,4 +225,4 @@ class OTP(BaseModelWithUID):
     class Meta:
         verbose_name = "OTP"
         verbose_name_plural = "OTPs"
-        ordering = ["-created_at"]
+        ordering = ("-pk",)

@@ -11,6 +11,7 @@ from core.views.user import (
     UserLoginRefresh,
     ForceResetUserPassword,
     ChangeUserPassword,
+    UserForgetPassword,
 )
 
 urlpatterns = [
@@ -28,4 +29,5 @@ urlpatterns = [
     ),
     path("/login", UserLogin.as_view(), name="user-login"),
     path("/login/refresh", UserLoginRefresh.as_view(), name="user-login-refresh"),
+    path("/forget-password", UserForgetPassword.as_view(), name="user-forget-password"),
 ]

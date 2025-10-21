@@ -164,21 +164,16 @@ class ForgetPasswordSerializer(serializers.Serializer):
         confirm_password = attrs.get("confirm_password")
 
         if not phone:
-            raise serializers.ValidationError(
-                {"message": "Phone number is required."},
-                status.HTTP_400_BAD_REQUEST,
-            )
+            raise serializers.ValidationError({"message": "Phone number is required."})
 
         if otp:
             if not password or not confirm_password:
                 raise serializers.ValidationError(
-                    {"message": "Password and confirm password are required."},
-                    status.HTTP_400_BAD_REQUEST,
+                    {"message": "Password and confirm password are required."}
                 )
             if password != confirm_password:
                 raise serializers.ValidationError(
-                    {"message": "Password and confirm password don't match!!!"},
-                    status.HTTP_400_BAD_REQUEST,
+                    {"message": "Password and confirm password don't match."}
                 )
 
         return attrs

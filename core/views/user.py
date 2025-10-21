@@ -127,95 +127,88 @@ class UserForgetPassword(APIView):
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            phone = serializer.validated_data.get("phone", None)
-            new_password = serializer.validated_data.get("password", None)
-            otp = serializer.validated_data.get("otp", None)
+        serializer.is_valid(raise_exception=True)
 
-            try:
-                # Check if a user with the provided phone number exists
-                user = User().get_all_actives().get(phone=phone)
-            except User.DoesNotExist:
+        phone = serializer.validated_data.get("phone")
+        otp = serializer.validated_data.get("otp")
+        new_password = serializer.validated_data.get("password")
+
+        try:
+            user = User.objects.get(phone=phone, is_active=True)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "User with the provided phone number does not exist."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # CASE 1: Requesting new OTP
+        if not otp:
+            five_minutes_ago = timezone.now() - timedelta(minutes=5)
+            existing_otp = OTP.objects.filter(
+                user=user,
+                otp_type=OTPType.PASSWORD_RESET,
+                is_used=False,
+                created_at__gte=five_minutes_ago,
+            ).exists()
+
+            if existing_otp:
                 return Response(
-                    {"detail": "Person with the provided phone number does not exist."},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-
-            if not otp:
-                # Check if there is an existing OTP created in the last 5 minutes
-                five_minutes_ago = timezone.now() - timedelta(minutes=5)
-                existing_otp = OTP.objects.filter(
-                    user_id=user.id,
-                    type=OTPType.PASSWORD_RESET,
-                    is_used=False,
-                    created_at__gte=five_minutes_ago,
-                ).exists()
-
-                if existing_otp:
-                    # User already has a valid OTP created in the last 5 minutes
-                    return Response(
-                        {
-                            "detail": "You already have an OTP. Please wait for the message."
-                        },
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-
-                else:
-                    # Generate a new OTP and send it to the user's phone
-                    otp = generate_unique_otp()
-                    OTP.objects.create(
-                        user_id=user.id, otp=otp, type=OTPType.PASSWORD_RESET
-                    )
-                    # sending sms
-                    # message = f"Your otp is {otp}."
-                    # send_sms(user.phone_number, message)
-
-                    # Return a response indicating that OTP will be sent to the user's phone
-                    return Response(
-                        {"detail": "OTP has sent to your phone number.", "code": "OTP"},
-                        status=status.HTTP_200_OK,
-                    )
-
-            elif new_password:
-                try:
-                    # Verify the OTP provided by the user
-                    otp_record = OTP.objects.get(
-                        user_id=user.id,
-                        otp=otp,
-                        is_used=False,
-                        type=OTPType.PASSWORD_RESET,
-                    )
-                except OTP.DoesNotExist:
-                    return Response(
-                        {"detail": "Invalid OTP."},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-
-                if timezone.now() < (otp_record.created_at + timedelta(minutes=5)):
-                    # Update the user's password
-                    # user.password = make_password(new_password)
-                    user.set_password(new_password)
-                    user.save(update_fields=["password"])
-
-                    # Mark the OTP as used
-                    otp_record.is_used = True
-                    otp_record.save(update_fields=["is_used"])
-
-                    return Response(
-                        {"detail": "Password reset successfully done"},
-                        status=status.HTTP_200_OK,
-                    )
-
-                else:
-                    return Response(
-                        {"detail": "OTP has expired."},
-                        status=status.HTTP_400_BAD_REQUEST,
-                    )
-            else:
-                return Response(
-                    {"detail": "Please provide new password and confirm password"},
+                    {
+                        "detail": "You already have an active OTP. Please wait for it to expire."
+                    },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+
+            # Generate and save OTP
+            code = generate_unique_otp()
+            OTP.objects.create(
+                user=user,
+                code=code,
+                otp_type=OTPType.PASSWORD_RESET,
+            )
+
+            # Send SMS (uncomment when integrated)
+            # send_sms(user.phone, f"Your OTP is {code}")
+
+            return Response(
+                {
+                    "detail": "OTP has been sent to your phone number.",
+                    "code": "OTP_SENT",
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        # CASE 2: Verifying OTP & Resetting password
+        try:
+            otp_record = OTP.objects.get(
+                user=user,
+                code=otp,
+                is_used=False,
+                otp_type=OTPType.PASSWORD_RESET,
+            )
+        except OTP.DoesNotExist:
+            return Response(
+                {"detail": "Invalid OTP."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if timezone.now() > otp_record.created_at + timedelta(minutes=5):
+            return Response(
+                {"detail": "OTP has expired."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # OTP valid: reset password
+        user.set_password(new_password)
+        user.save(update_fields=["password"])
+
+        otp_record.is_used = True
+        otp_record.save(update_fields=["is_used"])
+
+        return Response(
+            {"detail": "Password reset successfully."},
+            status=status.HTTP_200_OK,
+        )
 
 
 class ChangeUserPassword(APIView):
