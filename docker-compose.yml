@@ -104,12 +104,6 @@ services:
       - DEBUG=False
       - DJANGO_SETTINGS_MODULE=app.settings
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
 
   nginx:
     image: nginx:alpine
@@ -122,14 +116,8 @@ services:
       - media_volume:/media:ro
       - ./nginx:/etc/nginx/conf.d:ro
     depends_on:
-      web:
-        condition: service_healthy
+      - web
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
 volumes:
   static_volume:
