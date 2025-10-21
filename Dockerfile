@@ -49,50 +49,41 @@
 # # Start the application using Gunicorn
 # CMD ["/app/entrypoint.prod.sh"]
 
-# Stage 1: Builder
 FROM python:3.13-slim AS builder
-
 WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
-RUN pip install --upgrade pip
+# Install only necessary build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY requirements/dev.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
-# Copy source code
-COPY . .
-
-# Create staticfiles dir and collect static at build time
-RUN mkdir -p /app/staticfiles
-RUN python manage.py collectstatic --noinput
-
-# Stage 2: Production
-FROM python:3.13-slim
-
-# Create non-root user
-RUN useradd -m -r appuser
-
+FROM python:3.13-slim AS runner
 WORKDIR /app
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
-# Copy dependencies
-COPY --from=builder /usr/local/lib/python3.13/site-packages/ /usr/local/lib/python3.13/site-packages/
-COPY --from=builder /usr/local/bin/ /usr/local/bin/
+# Install only runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -m -r appuser \
+    && mkdir -p /app \
+    && chown -R appuser /app
 
-# Copy entire app (including pre-collected staticfiles)
-COPY --from=builder --chown=appuser:appuser /app /app
+# Copy only the installed packages from builder
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+# Copy application code
+COPY --chown=appuser:appuser . .
 
+# Set permissions and switch to non-root user
+RUN chmod +x /app/entrypoint.prod.sh
 USER appuser
 
 EXPOSE 8000
-
-# Simplified entrypoint (no collectstatic!)
-COPY --chown=appuser:appuser entrypoint.prod.sh /app/entrypoint.prod.sh
-RUN chmod +x /app/entrypoint.prod.sh
-
 CMD ["/app/entrypoint.prod.sh"]
