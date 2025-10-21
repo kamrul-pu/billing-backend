@@ -107,7 +107,7 @@ services:
       - "8000:80"
     volumes:
       - static_volume:/static
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro  # 🔥 this must be a file
+      - ./nginx:/etc/nginx/conf.d:ro  # ✅ MOUNT DIRECTORY INSTEAD OF SINGLE FILE
     depends_on:
       - web
 
