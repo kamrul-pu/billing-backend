@@ -1,115 +1,100 @@
-# services:
-#   # db:
-#   #   image: postgres:17
-#   #   ports:
-#   #     - "5432:5432"
-#   #   volumes:
-#   #     - postgres_data:/var/lib/postgresql/data
-#   #   environment:
-#   #     - DB_HOST=db
-#   #     - DB_NAME=devdb
-#   #     - DB_USER=devuser
-#   #     - DB_PASS=changeme
-
-#   django-web:
-#     build: .
-#     container_name: django-docker
-#     # depends_on:
-#     #   - db
-#     volumes:
-#       - ./static:/app/staticfiles
-#     env_file:
-#       - .env
-#     ports:
-#       - "8000:8000"
-
-#   # frontend-proxy:
-#   #   image: nginx:latest
-#   #   ports:
-#   #     - "8000:80"
-#   #   volumes:
-#   #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
-#   #     - ./static:/static:ro
-#     # depends_on:
-#     #   - django-web
-# # volumes:
-# #   postgres_data:
-
-# services:
-#   # Django app service
-#   django-web:
-#     build:
-#       context: .
-#       dockerfile: Dockerfile
-#     image: billing-backend-django:latest  # unified image name
-#     container_name: django-web
-#     env_file: .env
-#     # volumes:
-#     #   - ./static:/app/staticfiles
-#     networks:
-#       - billing-network
-#     # environment:
-#     #   - DATABASE_URL=${DATABASE_URL}
-#     #   - SECRET_KEY=${SECRET_KEY}
-#     #   - DEBUG=${DEBUG}
-#     #   - MIKROTIK_URL=${MIKROTIK_URL}
-#     #   - MIKROTIK_USER=${MIKROTIK_USER}
-#     #   - MIKROTIK_PASS=${MIKROTIK_PASS}
-#     #   - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,192.168.68.108}
-#     #   - DJANGO_CSRF_TRUSTED_ORIGINS=${DJANGO_CSRF_TRUSTED_ORIGINS:-http://localhost,http://127.0.0.1,http://0.0.0.0,http://192.168.68.108,http://192.168.68.108:80}
-#     #   - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost,http://127.0.0.1,http://localhost:3000,http://127.0.0.1:3000,http://localhost:80,http://127.0.0.1:80,http://192.168.68.108,http://192.168.68.108:80}
-#     #   - CELERY_BROKER_URL=redis://redis:6379/0
-#     #   - CELERY_RESULT_BACKEND=redis://redis:6379/0
-#     ports:
-#       - "8000:8000"
-#     restart: unless-stopped
-
-#   # # Celery worker using the same Django image
-#   # celery-worker:
-#   #   image: billing-backend-django:latest  # same image
-#   #   container_name: celery-worker
-#   #   command: celery -A app worker -l info
-#   #   env_file: .env
-#   #   volumes:
-#   #     - ./static:/app/staticfiles
-#   #   networks:
-#   #     - billing-network
-#   #   depends_on:
-#   #     - django-web
-#   #   # environment:
-#   #   #   - DATABASE_URL=${DATABASE_URL}
-#   #   #   - SECRET_KEY=${SECRET_KEY}
-#   #   #   - DEBUG=${DEBUG}
-#   #   #   - CELERY_BROKER_URL=redis://redis:6379/0
-#   #   #   - CELERY_RESULT_BACKEND=redis://redis:6379/0
-#   #   restart: unless-stopped
-
-# networks:
-#   billing-network:
-#     driver: bridge
-
 services:
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: billing-backend-web
-    command: /app/entrypoint.prod.sh
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: redis
+  #   ports:
+  #     - "6379:6379"
+  #   networks:
+  #     - billing-network
+  #   restart: unless-stopped
+
+  django-web:
+    build: .
+    container_name: django
+    env_file: .env
     volumes:
-      - static_volume:/app/staticfiles
-    env_file:
-      - .env
+      - ./static:/app/staticfiles
+    networks:
+      - billing-network
+    # depends_on:
+    #   - redis
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - MIKROTIK_URL=${MIKROTIK_URL}
+      - MIKROTIK_USER=${MIKROTIK_USER}
+      - MIKROTIK_PASS=${MIKROTIK_PASS}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,192.168.68.108}
+      - DJANGO_CSRF_TRUSTED_ORIGINS=${DJANGO_CSRF_TRUSTED_ORIGINS:-http://localhost,http://127.0.0.1,http://0.0.0.0,http://192.168.68.108,http://192.168.68.108:80}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost,http://127.0.0.1,http://localhost:3000,http://127.0.0.1:3000,http://localhost:80,http://127.0.0.1:80,http://192.168.68.108,http://192.168.68.108:80}
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+  # celery-worker:
+  #   build: ./backend
+  #   container_name: celery-worker
+  #   env_file: .env
+  #   command: celery -A app worker -l info
+  #   volumes:
+  #     - ./backend:/app
+  #   networks:
+  #     - billing-network
+  #   depends_on:
+  #     - redis
+  #     - django-web
+  #   environment:
+  #     - DATABASE_URL=${DATABASE_URL}
+  #     - SECRET_KEY=${SECRET_KEY}
+  #     - DEBUG=${DEBUG}
+  #     - CELERY_BROKER_URL=redis://redis:6379/0
+  #     - CELERY_RESULT_BACKEND=redis://redis:6379/0
+  #   restart: unless-stopped
+
+  # celery-beat:
+  #   build: ./backend
+  #   container_name: celery-beat
+  #   env_file: .env
+  #   command: celery -A app beat -l info
+  #   volumes:
+  #     - ./backend:/app
+  #   networks:
+  #     - billing-network
+  #   depends_on:
+  #     - redis
+  #     - django-web
+  #   environment:
+  #     - DATABASE_URL=${DATABASE_URL}
+  #     - SECRET_KEY=${SECRET_KEY}
+  #     - DEBUG=${DEBUG}
+  #     - CELERY_BROKER_URL=redis://redis:6379/0
+  #     - CELERY_RESULT_BACKEND=redis://redis:6379/0
+  #   restart: unless-stopped
+
+  # nextjs:
+  #   build: ./frontend
+  #   container_name: nextjs
+  #   expose:
+  #     - "3000"
+  #   networks:
+  #     - billing-network
+  #   environment:
+  #     - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-/api/v1}
 
   nginx:
-    image: nginx:latest
-    container_name: billing-backend-nginx
+    image: nginx:alpine
+    container_name: nginx
     ports:
-      - "8080:80"
+      - "80:80"
     volumes:
-      - static_volume:/static
-      - ./nginx:/etc/nginx/conf.d:ro  # ✅ MOUNT DIRECTORY INSTEAD OF SINGLE FILE
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./static:/static:ro
     depends_on:
-      - web
+      - django-web
+      # - nextjs
+    networks:
+      - billing-network
 
-volumes:
-  static_volume:
+networks:
+  billing-network:
+    driver: bridge
