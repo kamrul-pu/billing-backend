@@ -142,23 +142,31 @@ ENABLE_SILK=False
 
 ### Common Issues
 
-1. **Static files not loading**
+1. **Container becomes unhealthy**
+   - **Most common cause**: Missing or incorrect environment variables
+   - **Solution**: Ensure all required environment variables are set in Coolify
+   - **Quick fix**: Use `env.minimal` as a starting point
+   - Check container logs for specific error messages
+
+2. **Static files not loading**
    - Check if static files are collected: `python manage.py collectstatic`
    - Verify Nginx configuration
    - Check volume mounts
 
-2. **Database connection issues**
+3. **Database connection issues**
    - Verify `DATABASE_URL` format
    - Check database accessibility
    - Ensure database exists and user has permissions
+   - **For testing**: Use SQLite with `DATABASE_URL=sqlite:///db.sqlite3`
 
-3. **CORS issues**
+4. **CORS issues**
    - Update `CORS_ALLOWED_ORIGINS` with your frontend domain
    - Check `DJANGO_CSRF_TRUSTED_ORIGINS`
 
-4. **Health check failures**
+5. **Health check failures**
    - Check if Django app is running on port 8000
    - Verify health check endpoint is accessible
+   - **Quick test**: Visit `https://your-domain.com/health/`
 
 ### Debug Mode
 To enable debug mode temporarily:

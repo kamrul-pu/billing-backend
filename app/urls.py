@@ -17,7 +17,19 @@ SWAGGER_BASE_URL = "https://api.mikrolink.artsensebd.com"
 
 def health_check(request):
     """Health check endpoint for Docker and load balancers."""
-    return JsonResponse({"status": "healthy", "service": "billing-backend"})
+    try:
+        # Simple health check that doesn't require database
+        return JsonResponse({
+            "status": "healthy", 
+            "service": "billing-backend",
+            "timestamp": "2024-01-01T00:00:00Z"
+        })
+    except Exception as e:
+        return JsonResponse({
+            "status": "unhealthy", 
+            "service": "billing-backend",
+            "error": str(e)
+        }, status=500)
 
 
 urlpatterns = [
