@@ -82,7 +82,11 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --chown=appuser:appuser . .
 
 # Set permissions and switch to non-root user
-RUN chmod +x /app/entrypoint.prod.sh
+# Set permissions and switch to non-root user
+RUN chmod +x /app/entrypoint.prod.sh \
+    && mkdir -p /app/staticfiles \
+    && chown -R appuser:appuser /app
+
 USER appuser
 
 EXPOSE 8000
