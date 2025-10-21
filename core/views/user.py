@@ -44,6 +44,7 @@ from core.permissions import (
 from core.choices import UserKind, OTPType
 from core.models import OTP
 from core.utils import generate_unique_otp
+from common.helpers import SMS
 
 User = get_user_model()
 
@@ -169,6 +170,10 @@ class UserForgetPassword(APIView):
 
             # Send SMS (uncomment when integrated)
             # send_sms(user.phone, f"Your OTP is {code}")
+            SMS.send_single_sms(
+                to=user.phone,
+                message=f"Your OTP for password reset is {code}. It is valid for 5 minutes.",
+            )
 
             return Response(
                 {
