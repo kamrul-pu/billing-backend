@@ -6,6 +6,7 @@ from customer.views.customer import (
     CustomerPaymentsList,
     GenerateBill,
     StatusToggle,
+    TestCeleryTask
 )
 
 
@@ -15,5 +16,5 @@ urlpatterns = [
     path("/<str:uid>/payments", CustomerPaymentsList.as_view(), name="customer-detail"),
     path("/bills/generate", GenerateBill.as_view(), name="generate-bill"),
     path("/status/toggle", StatusToggle.as_view(), name="toggle-status"),
-
+    path("/test-celery", TestCeleryTask.as_view(), name="test-celery"),
 ]
