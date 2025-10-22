@@ -1,12 +1,12 @@
 services:
-  redis:
-    image: redis:7-alpine
-    container_name: redis
-    ports:
-      - "6389:6379"
-    networks:
-      - billing-network
-    restart: unless-stopped
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: redis
+  #   ports:
+  #     - "6389:6379"
+  #   networks:
+  #     - billing-network
+  #   restart: unless-stopped
 
   django-web:
     build: .
@@ -16,8 +16,8 @@ services:
       - ./static:/app/staticfiles
     networks:
       - billing-network
-    depends_on:
-      - redis
+    # depends_on:
+    #   - redis
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - SECRET_KEY=${SECRET_KEY}
@@ -28,8 +28,8 @@ services:
       - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0}
       - DJANGO_CSRF_TRUSTED_ORIGINS=${DJANGO_CSRF_TRUSTED_ORIGINS:-http://localhost,http://127.0.0.1}
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost,http://127.0.0.1}
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://default:9pj2bRIgYq91Z1vVsq2PlPTUolVMpVMn96rs5Puvf9vKQyWZS5vZenkwd4TFbiY2@145.223.22.92:6378/0
+      - CELERY_RESULT_BACKEND=redis://default:9pj2bRIgYq91Z1vVsq2PlPTUolVMpVMn96rs5Puvf9vKQyWZS5vZenkwd4TFbiY2@145.223.22.92:6378/0
 
   celery-worker:
     build: .
@@ -41,14 +41,14 @@ services:
     networks:
       - billing-network
     depends_on:
-      - redis
+      # - redis
       - django-web
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - SECRET_KEY=${SECRET_KEY}
       - DEBUG=${DEBUG}
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://default:9pj2bRIgYq91Z1vVsq2PlPTUolVMpVMn96rs5Puvf9vKQyWZS5vZenkwd4TFbiY2@145.223.22.92:6378/0
+      - CELERY_RESULT_BACKEND=redis://default:9pj2bRIgYq91Z1vVsq2PlPTUolVMpVMn96rs5Puvf9vKQyWZS5vZenkwd4TFbiY2@145.223.22.92:6378/0
 
   nginx:
     image: nginx:alpine
