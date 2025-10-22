@@ -3,7 +3,7 @@ services:
     image: redis:7-alpine
     container_name: redis
     ports:
-      - "6379:6379"
+      - "6389:6379"
     networks:
       - billing-network
     restart: unless-stopped
