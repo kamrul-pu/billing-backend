@@ -50,18 +50,18 @@ services:
       - CELERY_BROKER_URL=redis://default:9pj2bRIgYq91Z1vVsq2PlPTUolVMpVMn96rs5Puvf9vKQyWZS5vZenkwd4TFbiY2@145.223.22.92:6378/0
       - CELERY_RESULT_BACKEND=redis://default:9pj2bRIgYq91Z1vVsq2PlPTUolVMpVMn96rs5Puvf9vKQyWZS5vZenkwd4TFbiY2@145.223.22.92:6378/0
 
-  nginx:
-    image: nginx:alpine
-    container_name: nginx
-    ports:
-      - "8080:80"
-    volumes:
-      - ./static:/static:ro
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - django-web
-    networks:
-      - billing-network
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: nginx
+  #   ports:
+  #     - "8080:80"
+  #   volumes:
+  #     - ./static:/static:ro
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  #   depends_on:
+  #     - django-web
+  #   networks:
+  #     - billing-network
 
 networks:
   billing-network:
