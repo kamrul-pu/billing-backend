@@ -26,5 +26,5 @@
     COPY . .
     
     # ✅ Start Celery worker directly
-    CMD ["celery", "-A", "your_project_name", "worker", "-l", "info"]
+    CMD ["celery", "-A", "app", "worker", "-l", "info"]
     
