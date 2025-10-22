@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements/production.txt /app/requirements.txt
+COPY requirements/dev.txt /app/requirements.txt
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
 
@@ -29,6 +29,9 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy application code
 COPY . .
 
+# Ensure entrypoint is executable
+RUN chmod +x /app/entrypoint.prod.sh
+
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
@@ -42,5 +45,5 @@ USER appuser
 # Expose port
 EXPOSE 8000
 
-# Default command (can be overridden in coolify.yml)
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "--threads", "2", "app.wsgi:application"]
+# Start via entrypoint that waits for DB, migrates, collects static, then runs gunicorn
+CMD ["/app/entrypoint.prod.sh"]
