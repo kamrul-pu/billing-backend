@@ -34,7 +34,7 @@ from customer.serializers.payment import PaymentListSerializer
 # from customer.utils import toggle_ppp_user
 from customer.helpers import Mikrotik
 
-
+from customer.tasks import add
 class CustomerList(ListCreateAPIView):
     serializer_class = CustomerListSerializer
     permission_classes = [IsAdminUser | IsManager | IsStaff]
@@ -305,3 +305,11 @@ class StatusToggle(APIView):
         customer.save(update_fields=["is_active"])
 
         return Response({"message": "User Status Updated"}, status=status.HTTP_200_OK)
+
+
+class TestCeleryTask(APIView):
+    permission_classes = [AllowAny,]
+    
+    def get(self, request, *args, **kwargs):
+        add.delay(15, 30)
+        return Response({"message": "Backgroud task started"}, status=status.HTTP_200_OK)
