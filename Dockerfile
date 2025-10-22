@@ -32,15 +32,15 @@ COPY . .
 # Ensure entrypoint is executable
 RUN chmod +x /app/entrypoint.prod.sh
 
-# Create non-root user for security
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# # Create non-root user for security
+# RUN groupadd -r appuser && useradd -r -g appuser appuser
 
-# Ensure static dirs exist and set proper permissions
-RUN mkdir -p /app/staticfiles /app/media && \
-    chown -R appuser:appuser /app
+# # Ensure static dirs exist and set proper permissions
+# RUN mkdir -p /app/staticfiles /app/media && \
+#     chown -R appuser:appuser /app
 
-# Switch to non-root user
-USER appuser
+# # Switch to non-root user
+# USER appuser
 
 # Expose port
 EXPOSE 8000
