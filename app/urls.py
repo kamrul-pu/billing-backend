@@ -11,13 +11,9 @@ from django.http import JsonResponse
 from rest_framework import permissions
 
 from customer.views.customer import Dashboard
+from core.views.health import health_check
 
 SWAGGER_BASE_URL = "https://api.mikrolink.artsensebd.com"
-
-
-def health_check(request):
-    """Health check endpoint for Docker."""
-    return JsonResponse({"status": "healthy", "service": "billing-backend"})
 
 
 urlpatterns = [

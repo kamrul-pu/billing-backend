@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
-python manage.py collectstatic --noinput
+# Wait for database to be ready
+python manage.py wait_for_db
+
+# Run migrations
 python manage.py migrate --noinput
-gunicorn --bind 0.0.0.0:8000 --workers 3 --threads 2 app.wsgi:application
+
+# Collect static files
+python manage.py collectstatic --noinput
+
+# Start the application
+exec gunicorn --bind 0.0.0.0:8000 --workers 3 --threads 2 app.wsgi:application

@@ -1,0 +1,16 @@
+# Production requirements for billing-backend
+celery[redis]==5.3.4
+dj-database-url==2.1.0
+Django==5.0.8
+django-cleanup==8.2.0
+django-cors-headers==4.3.1
+django-unfold==0.19.0
+djangorestframework==3.15.2
+drf-spectacular==0.27.0
+gunicorn==21.2.0
+pillow==10.2.0
+psycopg2-binary==2.9.9
+PyJWT==2.8.0
+python-dotenv==1.0.0
+requests==2.31.0
+redis==5.0.1

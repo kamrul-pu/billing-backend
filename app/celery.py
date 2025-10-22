@@ -1,5 +1,4 @@
 import os
-from termios import BRKINT
 from celery import Celery
 from celery.schedules import crontab
 import random
@@ -7,21 +6,10 @@ import random
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "app.settings")
 
 # Create a Celery APP instance
-cel_app = Celery("celery_app")
-
-# Use environment variable for Docker compatibility, fallback to localhost for local development
-redis_url = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
-
-cel_app.conf.broker_url = redis_url
-cel_app.conf.result_backend = redis_url
-cel_app.conf.result_backend_transport_options = {
-    'retry_policy': {
-       'timeout': 5.0
-    }
-}
+cel_app = Celery("app")
 
 # Load settings from Django settings file (use a CELERY_ prefix)
-cel_app.config_from_object("django.conf.settings")
+cel_app.config_from_object("django.conf:settings", namespace="CELERY")
 
 # Auto discover tasks from all registered Django configs
 cel_app.autodiscover_tasks()

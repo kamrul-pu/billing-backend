@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements/dev.txt /app/requirements.txt
+COPY requirements/production.txt /app/requirements.txt
 RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
 
@@ -29,11 +29,18 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 # Copy application code
 COPY . .
 
-# Ensure entrypoint is executable and static dirs exist
-RUN chmod +x /app/entrypoint.prod.sh && mkdir -p /app/staticfiles
+# Create non-root user for security
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Ensure static dirs exist and set proper permissions
+RUN mkdir -p /app/staticfiles /app/media && \
+    chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
 
 # Expose port
 EXPOSE 8000
 
-# ✅ Run as root (no USER appuser)
-CMD ["/app/entrypoint.prod.sh"]
+# Default command (can be overridden in coolify.yml)
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "3", "--threads", "2", "app.wsgi:application"]
