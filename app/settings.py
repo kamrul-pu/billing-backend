@@ -149,7 +149,7 @@ WSGI_APPLICATION = "app.wsgi.application"
 #     "DATABASE_URL", "postgres://dev_user:changeme@db:5432/dev_db"
 # )
 DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///db.sqlite3")
-
+print("DATABASE_URL: ", DATABASE_URL)
 DATABASES = {
     "default": dj_database_url.config(
         default=DATABASE_URL,
