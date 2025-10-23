@@ -68,7 +68,7 @@ class CustomerListSerializer(CustomerBase):
             serializers.ValidationError(
                 {"username": "Username is required to create user."}
             )
-        package = Package.objects.get(id=package_id)
+        package = Package.objects.filter(id=package_id).first()
         if not package:
             raise serializers.ValidationError(
                 {"package": "Packge not found for this id"}
@@ -102,9 +102,10 @@ class CustomerListSerializer(CustomerBase):
             {
                 "username": username,
                 "password": validated_data.get("password", "12345"),
-                "service": (
-                    "pppoe" if connection_type == ConnectionType.PPPoE else "dhcp"
-                ),
+                # "service": (
+                #     "pppoe" if connection_type == ConnectionType.PPPoE else "dhcp"
+                # ),
+                "service": "pppoe",  # For simplicity, all are pppoe
                 "profile": package.name or "default",
                 "comment": validated_data.get("Address", "New Customer"),
             },
