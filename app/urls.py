@@ -48,6 +48,7 @@ urlpatterns = [
     # include core endpoints
     # Dashboard endpoints
     path("api/v1/dashboard", Dashboard.as_view(), name="dashboard"),
+    path("api/v1/tasks", include("customer.urls.tasks"), name="customer-tasks-urls"),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
