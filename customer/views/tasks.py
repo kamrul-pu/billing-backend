@@ -28,12 +28,14 @@ class GenerateBillTask(APIView):
 
         if not user.organization:
             return Response(
-                {"message": "This user doesn't belongs to any organization"}, status=status.HTTP_400_BAD_REQUEST,
+                {"message": "This user doesn't belongs to any organization"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
         generate_customer_bills.delay(user.organization_id)
         # generate_customer_bills(user.organization_id)
         return Response(
-            {"message": "Customer bills generation backgroud Task started!"}, status=status.HTTP_200_OK,
+            {"message": "Customer bills generation backgroud Task started!"},
+            status=status.HTTP_200_OK,
         )
 
 
@@ -44,8 +46,12 @@ class DeactiveDueCustomer(APIView):
         user = request.user
         if not user.organization:
             return Response(
-                {"message": "This user doesn't belongs to any organization"}, status=status.HTTP_400_BAD_REQUEST,
+                {"message": "This user doesn't belongs to any organization"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
         deactivate_due_payment_customers.delay(user.organization_id)
         # deactivate_due_payment_customers(user.organization_id)
-        return Response({"message": "Deactivate due customers backgroud Task started!"}, status=status.HTTP_200_OK,)
+        return Response(
+            {"message": "Deactivate due customers backgroud Task started!"},
+            status=status.HTTP_200_OK,
+        )

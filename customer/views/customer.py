@@ -35,6 +35,8 @@ from customer.serializers.payment import PaymentListSerializer
 from customer.helpers import Mikrotik
 from customer.tasks import add
 from customer.utils import month_name_to_bangla
+
+
 class CustomerList(ListCreateAPIView):
     serializer_class = CustomerListSerializer
     permission_classes = [IsAdminUser | IsManager | IsStaff]
@@ -119,6 +121,25 @@ class CustomerDetail(RetrieveUpdateDestroyAPIView):
         )
         return queryset
 
+    def delete(self, request, *args, **kwargs):
+        print("Deleting customer...")
+        instance = self.get_object()
+        organization = request.user.organization
+        success, msg = Mikrotik.delete_ppp_user(instance.username, organization)
+        if not success:
+            return Response(
+                {"message": f"Failed to delete user in Server: {msg}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        instance.delete()
+        if organization and organization.total_customer > 0:
+            organization.total_customer -= 1
+            organization.save(update_fields=["total_customer"])
+        return Response(
+            {"message": "Customer removed successfully!!!"},
+            status=status.HTTP_204_NO_CONTENT,
+        )
+
 
 class CustomerPaymentsList(ListCreateAPIView):
     serializer_class = PaymentListSerializer
@@ -191,11 +212,11 @@ class GenerateBill(APIView):
                 )
             )
             messages.append(
-            {
-                "to": customer.phone,
-                "message": f"{month_name_to_bangla.get(month, '')} মাসের বিল {bill_amount}TK পরিশোধ করুন - {organization_name}"
-            }
-        )
+                {
+                    "to": customer.phone,
+                    "message": f"{month_name_to_bangla.get(month, '')} মাসের বিল {bill_amount}TK পরিশোধ করুন - {organization_name}",
+                }
+            )
 
         # Bulk create payments
         Payment.objects.bulk_create(payments_to_create)
@@ -319,8 +340,12 @@ class StatusToggle(APIView):
 
 
 class TestCeleryTask(APIView):
-    permission_classes = [AllowAny,]
+    permission_classes = [
+        AllowAny,
+    ]
 
     def get(self, request, *args, **kwargs):
         add.delay(15, 30)
-        return Response({"message": "Backgroud task started"}, status=status.HTTP_200_OK)
+        return Response(
+            {"message": "Backgroud task started"}, status=status.HTTP_200_OK
+        )

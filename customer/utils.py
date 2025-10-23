@@ -104,5 +104,5 @@ month_name_to_bangla = {
     "SEPTEMBER": "সেপ্টেম্বর",
     "OCTOBER": "অক্টোবর",
     "NOVEMBER": "নভেম্বর",
-    "DECEMBER": "ডিসেম্বর"
+    "DECEMBER": "ডিসেম্বর",
 }

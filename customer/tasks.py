@@ -39,9 +39,7 @@ def generate_customer_bills(org_id: int = 1):
     paid_customer_ids = set(existing_payments.values_list("customer_id", flat=True))
 
     # Step 3: Filter customers who haven't been billed
-    customers_to_bill = [
-        c for c in active_customers if c.id not in paid_customer_ids
-    ]
+    customers_to_bill = [c for c in active_customers if c.id not in paid_customer_ids]
     messages = []
     # Step 4: Create payment records in bulk
     payments_to_create = []
@@ -60,11 +58,11 @@ def generate_customer_bills(org_id: int = 1):
             )
         )
         messages.append(
-        {
-            "to": customer.phone,
-            "message": f"{month_name_to_bangla.get(month, '')} মাসের বিল {bill_amount}TK পরিশোধ করুন - {organization_name}"
-        }
-    )
+            {
+                "to": customer.phone,
+                "message": f"{month_name_to_bangla.get(month, '')} মাসের বিল {bill_amount}TK পরিশোধ করুন - {organization_name}",
+            }
+        )
     # Bulk create payments
     if payments_to_create:
         Payment.objects.bulk_create(payments_to_create)
@@ -78,6 +76,7 @@ def generate_customer_bills(org_id: int = 1):
             print("Failed to submit messages")
     else:
         print("No payment data to create")
+
 
 @shared_task
 def deactivate_due_payment_customers(org_id: int = 1):
@@ -107,7 +106,10 @@ def deactivate_due_payment_customers(org_id: int = 1):
             print(f"Deactivating customer: {customer.username} for unpaid bill.")
             # Deactive the customer
             success, msg = Mikrotik.toggle_ppp_user(
-                username=customer.username, disable=True, organization=organization, session_id=user_to_session_id.get(customer.username, "")
+                username=customer.username,
+                disable=True,
+                organization=organization,
+                session_id=user_to_session_id.get(customer.username, ""),
             )
             if success:
                 customer.is_active = False
@@ -115,7 +117,7 @@ def deactivate_due_payment_customers(org_id: int = 1):
                 messages.append(
                     {
                         "to": customer.phone,
-                        "message": f"{month_name_to_bangla.get(month, '')} বিল বকেয়া, সংযোগ বন্ধ। চালু করতে বিল পরিশোধ করুন-{organization_name}"
+                        "message": f"{month_name_to_bangla.get(month, '')} বিল বকেয়া, সংযোগ বন্ধ। চালু করতে বিল পরিশোধ করুন-{organization_name}",
                     }
                 )
             else:
@@ -127,7 +129,7 @@ def deactivate_due_payment_customers(org_id: int = 1):
         sms_send: bool = False
         if messages and organization.sms_feature:
             sms_send = SMS.send_bulk_sms(messages)
-        
+
         if sms_send:
             print("SMS submission successfull!")
         else:
