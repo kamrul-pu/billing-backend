@@ -90,3 +90,19 @@ def toggle_ppp_user(username, disable=True):
         return False, f"Network error: {str(e)}"
     except Exception as e:
         return False, f"Unexpected error: {str(e)}"
+
+
+month_name_to_bangla = {
+    "JANUARY": "জানুয়ারি",
+    "FEBRUARY": "ফেব্রুয়ারি",
+    "MARCH": "মার্চ",
+    "APRIL": "এপ্রিল",
+    "MAY": "মে",
+    "JUNE": "জুন",
+    "JULY": "জুলাই",
+    "AUGUST": "আগস্ট",
+    "SEPTEMBER": "সেপ্টেম্বর",
+    "OCTOBER": "অক্টোবর",
+    "NOVEMBER": "নভেম্বর",
+    "DECEMBER": "ডিসেম্বর"
+}

@@ -2,8 +2,9 @@ from celery import shared_task
 from django.utils import timezone
 
 from core.models import Organization
+from common.helpers import SMS
 from customer.models import Customer, Payment
-from customer.utils import toggle_ppp_user
+from customer.utils import toggle_ppp_user, month_name_to_bangla
 from customer.helpers import Mikrotik
 
 
@@ -14,7 +15,12 @@ def add(x=10, y=20):
 
 
 @shared_task
-def generate_customer_bills():
+def generate_customer_bills(org_id: int = 1):
+    organization = Organization.objects.filter(id=org_id).first()
+    if not organization:
+        print(f"No organization found with ID {org_id}.")
+        return
+    organization_name = organization.name or "M_Online"
     month = timezone.now().strftime("%B").upper()
     # Step 1: Get all active customers
     active_customers = Customer.objects.filter(
@@ -27,7 +33,7 @@ def generate_customer_bills():
 
     # Step 3: Filter customers who haven't been billed
     customers_to_bill = [c for c in active_customers if c.id not in paid_customer_ids]
-
+    messages = []
     # Step 4: Create payment records in bulk
     payments_to_create = []
     for customer in customers_to_bill:
@@ -43,22 +49,31 @@ def generate_customer_bills():
                 note=f"Auto-generated bill for {month}",
             )
         )
+        messages.append(
+                {"to": customer.phone,
+                "message": f"প্রিয় গ্রাহক আপনার {month_name_to_bangla.get(month, '')} মাসের বিল {bill_amount}TK পরিশোধ করুন -{organization_name}"}
+            )
 
     # Bulk create payments
     Payment.objects.bulk_create(payments_to_create)
+    if messages and organization.sms_feature:
+        sms_send = SMS.send_bulk_sms(messages)
+        print(f"SMS sent: {sms_send}")
+    else:
+        print("No SMS to send.")
 
 
 @shared_task
-def deactivate_due_payment_customers():
+def deactivate_due_payment_customers(org_id: int = 1):
     month = timezone.now().strftime("%B").upper()
-    organization = Organization.objects.filter(id=1).first()
+    organization = Organization.objects.filter(id=org_id).first()
     if not organization:
         print("No organization found with ID 1.")
         return
     payments = (
         Payment()
         .get_all_actives()
-        .filter(billing_month=month, paid=False, organization_id=organization.id)
+        .filter(billing_month=month, paid=False, organization_id=org_id)
         .select_related("customer")
     )
 

@@ -22,7 +22,7 @@ from core.permissions import (
     IsStaff,
     AllowAny,
 )
-
+from common.helpers import SMS
 from customer.models import Customer, Payment, Package
 from customer.serializers.customer import (
     CustomerListSerializer,
@@ -34,7 +34,7 @@ from customer.serializers.payment import PaymentListSerializer
 # from customer.utils import toggle_ppp_user
 from customer.helpers import Mikrotik
 from customer.tasks import add
-
+from customer.utils import month_name_to_bangla
 class CustomerList(ListCreateAPIView):
     serializer_class = CustomerListSerializer
     permission_classes = [IsAdminUser | IsManager | IsStaff]
@@ -160,6 +160,8 @@ class GenerateBill(APIView):
             is_free=False,
             organization_id=request.user.organization_id,
         ).select_related("package")
+        organization = request.user.organization
+        organization_name = organization.name or "M_Online"
 
         # Step 2: Get customer IDs with existing payments for current month
         existing_payments = Payment.objects.filter(
@@ -188,14 +190,21 @@ class GenerateBill(APIView):
                     note=f"Auto-generated bill for {month}",
                 )
             )
+            messages.append(
+                {"to": customer.phone,
+                "message": f"প্রিয় গ্রাহক আপনার {month_name_to_bangla.get(month, '')} মাসের বিল {bill_amount}TK পরিশোধ করুন -{organization_name}"}
+            )
 
         # Bulk create payments
         Payment.objects.bulk_create(payments_to_create)
-
+        sms_send = False
+        if messages and organization.sms_feature:
+            sms_send = SMS.send_bulk_sms(messages)
         return Response(
             {
                 "message": f"Billing for {month} processed.",
                 "created_payments_count": len(payments_to_create),
+                "sms_send": sms_send,
                 # "payments": payments_to_create,
             }
         )

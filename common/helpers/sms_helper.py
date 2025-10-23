@@ -37,9 +37,10 @@ class SMS:
             "senderid": SMS_SENDER_ID,
             "messages": messages,
         }
+
         url: str = SMS_URL + "/smsapimany"
         try:
-            response = requests.post(url, data=json.dumps(body))
+            response = requests.post(url, json=body)
             response.raise_for_status()
             if response.status_code != 202:
                 print(f"Failed to send SMS, {response.text}")
