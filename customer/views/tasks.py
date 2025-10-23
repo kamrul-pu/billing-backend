@@ -31,6 +31,15 @@ class GenerateBillTask(APIView):
                 {"message": "This user doesn't belongs to any organization"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        if (
+            not organization.router_ip
+            or not organization.router_username
+            or not organization.router_password
+        ):
+            return Response(
+                {"message": "Organization MikroTik router details are not configured."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         generate_customer_bills.delay(user.organization_id)
         # generate_customer_bills(user.organization_id)
         return Response(
@@ -47,6 +56,15 @@ class DeactiveDueCustomer(APIView):
         if not user.organization:
             return Response(
                 {"message": "This user doesn't belongs to any organization"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if (
+            not organization.router_ip
+            or not organization.router_username
+            or not organization.router_password
+        ):
+            return Response(
+                {"message": "Organization MikroTik router details are not configured."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         deactivate_due_payment_customers.delay(user.organization_id)
