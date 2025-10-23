@@ -297,7 +297,7 @@ class Mikrotik:
                     response = response.json()
                     return (
                         False,
-                        f"Create failed: {response.get('detail', '')}, {response.get('message', '')}",
+                        f"{response.get('detail', 'Failed to create user')}",
                     )
 
                 except:
