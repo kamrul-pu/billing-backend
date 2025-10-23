@@ -25,7 +25,8 @@ class GenerateBillTask(APIView):
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        if not user.organization_id:
+        print("org id", user.organization_id)
+        if not user.organization:
             return Response(
                 {"message": "This user doesn't belongs to any organization"}, status=status.HTTP_400_BAD_REQUEST,
             )
@@ -40,7 +41,7 @@ class DeactiveDueCustomer(APIView):
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        if not user.organization_id:
+        if not user.organization:
             return Response(
                 {"message": "This user doesn't belongs to any organization"}, status=status.HTTP_400_BAD_REQUEST,
             )
