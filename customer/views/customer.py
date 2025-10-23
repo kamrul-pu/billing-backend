@@ -191,9 +191,11 @@ class GenerateBill(APIView):
                 )
             )
             messages.append(
-                {"to": customer.phone,
-                "message": f"প্রিয় গ্রাহক আপনার {month_name_to_bangla.get(month, '')} মাসের বিল {bill_amount}TK পরিশোধ করুন -{organization_name}"}
-            )
+            {
+                "to": customer.phone,
+                "message": f"{month_name_to_bangla.get(month, '')} মাসের বিল {bill_amount}TK পরিশোধ করুন - {organization_name}"
+            }
+        )
 
         # Bulk create payments
         Payment.objects.bulk_create(payments_to_create)

@@ -50,17 +50,22 @@ def generate_customer_bills(org_id: int = 1):
             )
         )
         messages.append(
-                {"to": customer.phone,
-                "message": f"প্রিয় গ্রাহক আপনার {month_name_to_bangla.get(month, '')} মাসের বিল {bill_amount}TK পরিশোধ করুন -{organization_name}"}
-            )
+            {
+                "to": customer.phone,
+                "message": f"{month_name_to_bangla.get(month, '')} মাসের বিল {bill_amount}TK পরিশোধ করুন - {organization_name}"
+            }
+        )
 
     # Bulk create payments
     Payment.objects.bulk_create(payments_to_create)
+    sms_send: bool = False
     if messages and organization.sms_feature:
         sms_send = SMS.send_bulk_sms(messages)
         print(f"SMS sent: {sms_send}")
+    if sms_send:
+        print("SMS submission successfull!")
     else:
-        print("No SMS to send.")
+        print("Failed to submit messages")
 
 
 @shared_task
@@ -76,7 +81,8 @@ def deactivate_due_payment_customers(org_id: int = 1):
         .filter(billing_month=month, paid=False, organization_id=org_id)
         .select_related("customer")
     )
-
+    organization_name = organization.name or "M_Online"
+    messages = []
     customers_to_update = []
     for payment in payments:
         customer = payment.customer
@@ -89,9 +95,24 @@ def deactivate_due_payment_customers(org_id: int = 1):
             if success:
                 customer.is_active = False
                 customers_to_update.append(customer)
+                messages.append(
+                    {
+                        "to": customer.phone,
+                        "message": f"{month_name_to_bangla.get(month, '')} বিল বকেয়া, সংযোগ বন্ধ। চালু করতে বিল পরিশোধ করুন-{organization_name}"
+                    }
+                )
             else:
                 print(f"Error Message: ", msg)
 
     if customers_to_update:
         Customer.objects.bulk_update(customers_to_update, fields=["is_active"])
         print("Customer updated successfully!")
+    sms_send: bool = False
+    if messages and organization.sms_feature:
+        sms_send = SMS.send_bulk_sms(messages)
+    
+    if sms_send:
+        print("SMS submission successfull!")
+    else:
+        print("Failed to submit messages")
+

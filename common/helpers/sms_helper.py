@@ -42,7 +42,6 @@ class SMS:
         try:
             response = requests.post(url, data=body)
             response.raise_for_status()
-            print("response status code: ", response.status_code)
             if response.status_code not in [200, 202]:
                 print(f"Failed to send SMS, {response.text}")
                 return False
