@@ -112,9 +112,7 @@ class CustomerListSerializer(CustomerBase):
             organization,
         )
         if not success:
-            raise serializers.ValidationError(
-                {"message": f"Failed to create user in Server: {msg}"}
-            )
+            raise serializers.ValidationError({"message": f"{msg}"})
         organization.total_customer += 1
         organization.save(update_fields=["total_customer"])
         validated_data["organization_id"] = self.context["request"].user.organization_id
