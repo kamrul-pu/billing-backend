@@ -88,6 +88,9 @@ class Mikrotik:
         Get all active PPP sessions.
         :return: tuple(success: bool, sessions_list_or_error: list/str)
         """
+        if not organization.router_ip or not organization.router_username or not organization.router_password:
+            print("Router configuration is not added yet")
+            return False, []
         try:
             url = f"{organization.router_ip}/rest/ppp/active"
             response = requests.get(
@@ -100,8 +103,8 @@ class Mikrotik:
             print("RRRRR: ", response)
             if response.status_code == 200:
                 return True, response.json()
-            else:
-                return False, f"HTTP {response.status_code}: {response.text}"
+
+            return False, []
 
         except requests.exceptions.Timeout:
             return False, "Request timed out"
@@ -140,7 +143,7 @@ class Mikrotik:
             return False
 
     @staticmethod
-    def toggle_ppp_user(username, disable=True, organization=None):
+    def toggle_ppp_user(username, disable=True, organization=None, session_id=None):
         """
         Enable or disable a PPP user.
         If disabling, also terminate active session.
@@ -179,7 +182,14 @@ class Mikrotik:
                 return False, f"Update failed: {error_msg}"
 
             # Step 3: If disabling, terminate active session
-            if disable:
+            if disable and session_id:
+                if Mikrotik.delete_user_session(session_id):
+                    print(f"[Mikrotik] Terminated session for '{username}'")
+                else:
+                    print(
+                        f"[Mikrotik] Warning: Could not terminate session for '{username}'"
+                    )
+            elif disable:
                 success, sessions = Mikrotik.get_user_sessions(organization)
                 if success:
                     for session in sessions:

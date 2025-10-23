@@ -95,13 +95,19 @@ def deactivate_due_payment_customers(org_id: int = 1):
     organization_name = organization.name or "M_Online"
     messages = []
     customers_to_update = []
+
+    success, user_sessions = Mikrotik.get_user_sessions(organization)
+    user_to_session_id = {}
+    for session in user_sessions:
+        user_to_session_id[session.get("name", "")] = session.get(".id", "")
+
     for payment in payments:
         customer = payment.customer
         if customer.is_active and not customer.is_free:
             print(f"Deactivating customer: {customer.username} for unpaid bill.")
             # Deactive the customer
             success, msg = Mikrotik.toggle_ppp_user(
-                username=customer.username, disable=True, organization=organization
+                username=customer.username, disable=True, organization=organization, session_id=user_to_session_id.get(customer.username, "")
             )
             if success:
                 customer.is_active = False
