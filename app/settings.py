@@ -201,7 +201,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 # STATIC_ROOT = STATIC_DIR
-STATIC_URL = "static/"
+# STATIC_URL = "static/"
+STATIC_URL = "https://billing-static.artsensebd.com/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_ROOT = MEDIA_DIR
