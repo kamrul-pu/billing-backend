@@ -134,3 +134,21 @@ def deactivate_due_payment_customers(org_id: int = 1):
             print("SMS submission successfull!")
         else:
             print("Failed to submit messages")
+
+
+@shared_task
+def generate_organizations_bills():
+    organizations = Organization().get_all_actives()
+    for org in organizations:
+        print(f"Generating bills for organization: {org.name} (ID: {org.id})")
+        generate_customer_bills(org.id)
+
+
+@shared_task
+def deactivate_organizations_due_payment_customers():
+    organizations = Organization().get_all_actives()
+    for org in organizations:
+        print(
+            f"Deactivating due payment customers for organization: {org.name} (ID: {org.id})"
+        )
+        deactivate_due_payment_customers(org.id)

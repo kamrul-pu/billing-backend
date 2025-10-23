@@ -1,23 +1,20 @@
 from core.views import organization
-from django.utils import timezone
-from django.db.models import Q, Count, Sum
+
 
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.generics import (
-    ListAPIView,
-    ListCreateAPIView,
-    RetrieveUpdateDestroyAPIView,
-)
+
 
 from rest_framework.response import Response
 
-from core.permissions import (
-    IsAdminUser,
-    IsManager,
-)
+from core.permissions import IsAdminUser, IsManager, AllowAny
 
-from customer.tasks import generate_customer_bills, deactivate_due_payment_customers
+from customer.tasks import (
+    generate_customer_bills,
+    deactivate_due_payment_customers,
+    generate_organizations_bills,
+    deactivate_organizations_due_payment_customers,
+)
 
 
 class GenerateBillTask(APIView):
@@ -71,5 +68,31 @@ class DeactiveDueCustomer(APIView):
         # deactivate_due_payment_customers(user.organization_id)
         return Response(
             {"message": "Deactivate due customers backgroud Task started!"},
+            status=status.HTTP_200_OK,
+        )
+
+
+class GenerateOrganizationsBillTask(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        generate_organizations_bills.delay()
+        # generate_organizations_bills()
+        return Response(
+            {"message": "Organizations bills generation backgroud Task started!"},
+            status=status.HTTP_200_OK,
+        )
+
+
+class DeactiveOrganizationsDueCustomer(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        deactivate_organizations_due_payment_customers.delay()
+        # deactivate_organizations_due_payment_customers()
+        return Response(
+            {
+                "message": "Deactivate organizations due customers backgroud Task started!"
+            },
             status=status.HTTP_200_OK,
         )
