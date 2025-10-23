@@ -22,17 +22,26 @@ def generate_customer_bills(org_id: int = 1):
         return
     organization_name = organization.name or "M_Online"
     month = timezone.now().strftime("%B").upper()
+
     # Step 1: Get all active customers
     active_customers = Customer.objects.filter(
-        is_active=True, is_free=False
+        is_active=True,
+        is_free=False,
+        organization_id=org_id,
     ).select_related("package")
 
+    organization_name = organization.name or "M_Online"
+
     # Step 2: Get customer IDs with existing payments for current month
-    existing_payments = Payment.objects.filter(billing_month=month)
+    existing_payments = Payment.objects.filter(
+        billing_month=month, organization_id=org_id
+    )
     paid_customer_ids = set(existing_payments.values_list("customer_id", flat=True))
 
     # Step 3: Filter customers who haven't been billed
-    customers_to_bill = [c for c in active_customers if c.id not in paid_customer_ids]
+    customers_to_bill = [
+        c for c in active_customers if c.id not in paid_customer_ids
+    ]
     messages = []
     # Step 4: Create payment records in bulk
     payments_to_create = []
@@ -40,6 +49,7 @@ def generate_customer_bills(org_id: int = 1):
         bill_amount = customer.package.price if customer.package else 0.0
         payments_to_create.append(
             Payment(
+                organization_id=org_id,
                 customer=customer,
                 bill_amount=bill_amount,
                 amount=0.0,
@@ -50,23 +60,24 @@ def generate_customer_bills(org_id: int = 1):
             )
         )
         messages.append(
-            {
-                "to": customer.phone,
-                "message": f"{month_name_to_bangla.get(month, '')} মাসের বিল {bill_amount}TK পরিশোধ করুন - {organization_name}"
-            }
-        )
-
+        {
+            "to": customer.phone,
+            "message": f"{month_name_to_bangla.get(month, '')} মাসের বিল {bill_amount}TK পরিশোধ করুন - {organization_name}"
+        }
+    )
     # Bulk create payments
-    Payment.objects.bulk_create(payments_to_create)
-    sms_send: bool = False
-    if messages and organization.sms_feature:
-        sms_send = SMS.send_bulk_sms(messages)
-        print(f"SMS sent: {sms_send}")
-    if sms_send:
-        print("SMS submission successfull!")
+    if payments_to_create:
+        Payment.objects.bulk_create(payments_to_create)
+        sms_send: bool = False
+        if messages and organization.sms_feature:
+            sms_send = SMS.send_bulk_sms(messages)
+            print(f"SMS sent: {sms_send}")
+        if sms_send:
+            print("SMS submission successfull!")
+        else:
+            print("Failed to submit messages")
     else:
-        print("Failed to submit messages")
-
+        print("No payment data to create")
 
 @shared_task
 def deactivate_due_payment_customers(org_id: int = 1):
@@ -107,12 +118,11 @@ def deactivate_due_payment_customers(org_id: int = 1):
     if customers_to_update:
         Customer.objects.bulk_update(customers_to_update, fields=["is_active"])
         print("Customer updated successfully!")
-    sms_send: bool = False
-    if messages and organization.sms_feature:
-        sms_send = SMS.send_bulk_sms(messages)
-    
-    if sms_send:
-        print("SMS submission successfull!")
-    else:
-        print("Failed to submit messages")
-
+        sms_send: bool = False
+        if messages and organization.sms_feature:
+            sms_send = SMS.send_bulk_sms(messages)
+        
+        if sms_send:
+            print("SMS submission successfull!")
+        else:
+            print("Failed to submit messages")
