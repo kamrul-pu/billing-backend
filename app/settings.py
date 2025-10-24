@@ -89,6 +89,7 @@ THIRD_PARTY_APPS = [
     "corsheaders",
     "django_cleanup.apps.CleanupConfig",
     "rest_framework",
+    "storages",
 ]
 
 if ENABLE_SILK:
@@ -206,7 +207,7 @@ STATIC_URL = "https://billing-static.artsensebd.com/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_ROOT = MEDIA_DIR
-MEDIA_URL = "/media/"
+# MEDIA_URL = "/media/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -366,3 +367,24 @@ redis_url = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
 # Swagger settings
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
+
+
+# Default file storage
+DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
+# MinIO / S3 settings
+AWS_S3_ENDPOINT_URL = "https://media-s3.artsensebd.com"  # Your MinIO S3 API URL
+AWS_ACCESS_KEY_ID = "admin"
+AWS_SECRET_ACCESS_KEY = "Admin@11"
+
+AWS_STORAGE_BUCKET_NAME = "media"  # Create this bucket in MinIO first
+AWS_S3_REGION_NAME = None  # MinIO doesn’t use regions
+
+# Optional settings
+AWS_S3_SIGNATURE_VERSION = "s3v4"
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = None  # Needed for modern Django versions
+AWS_QUERYSTRING_AUTH = False  # If you want public URLs
+
+# Media URL
+MEDIA_URL = f"{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/"

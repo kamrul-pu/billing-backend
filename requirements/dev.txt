@@ -1,3 +1,4 @@
+boto3
 celery[redis]
 # django-celery-beat
 dj-database-url
@@ -5,6 +6,7 @@ Django
 django-cleanup
 django-cors-headers
 django-silk
+django-storages
 django-unfold
 djangorestframework
 drf-spectacular
