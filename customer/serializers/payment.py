@@ -107,7 +107,7 @@ class PaymentListSerializer(PaymentBase):
                 payment.transaction_id = str(transaction_id)
                 payment.entry_by = request.user
                 payment.updated_by = request.user
-                payment.organization_id = request.user.organization_id
+                payment.organization_id = organization.id
                 payment.note = f"Payment updated by {request.user.first_name} {request.user.last_name}"
                 payment.save(
                     update_fields=[
@@ -122,9 +122,13 @@ class PaymentListSerializer(PaymentBase):
                 )
                 print("Payment updated successfully.")
             else:
+                print(
+                    "Creating new payment record. and organization id is: ",
+                    organization.id,
+                )
                 # Create new payment
                 payment = Payment.objects.create(
-                    organization_id=request.user.organization_id,
+                    organization_id=organization.id,
                     customer=customer,
                     bill_amount=bill_amount,
                     amount=amount,
