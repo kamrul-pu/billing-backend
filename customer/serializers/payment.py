@@ -4,10 +4,12 @@ from django.db import transaction
 import logging
 from django.utils import timezone
 from rest_framework import serializers
-from core.views import organization
+
+from common.helpers import SMS
 from customer.models import Payment, Customer
 from core.serializers.user import UserLiteSerializer
 from customer.serializers.customer import CustomerBase
+from customer.utils import month_name_to_bangla
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +58,7 @@ class PaymentListSerializer(PaymentBase):
 
     def create(self, validated_data):
         request = self.context["request"]
+        organization = request.user.organization or None
         transaction_id = uuid.uuid4()
         payment_date = validated_data.get("payment_date", timezone.now())
         customer_id = validated_data["customer_id"]
@@ -63,9 +66,7 @@ class PaymentListSerializer(PaymentBase):
         try:
             customer = Customer.objects.select_related("package").get(id=customer_id)
         except Customer.DoesNotExist:
-            raise serializers.ValidationError(
-                {"message": "Customer does not exist."}
-            )
+            raise serializers.ValidationError({"message": "Customer does not exist."})
 
         if customer.is_free:
             raise serializers.ValidationError(
@@ -144,6 +145,16 @@ class PaymentListSerializer(PaymentBase):
                 customer.save(update_fields=["is_active"])
                 print("Customer activated due to successful payment.")
 
+        if (
+            organization
+            and organization.sms_feature
+            and is_fully_paid
+            and customer.phone
+        ):
+            SMS.send_single_sms(
+                to=customer.phone,
+                message=f"আপনার {month_name_to_bangla.get(validated_data.get('billing_month', ''), '')} এর বিল {amount} BDT পরিশোধ হয়েছে - {organization.name or 'M_Online'}",
+            )
         return payment
 
 
@@ -169,4 +180,15 @@ class PaymentDetailSerializer(PaymentBase):
         if validated_data.get("paid") and not instance.customer.is_active:
             instance.customer.is_active = True
             instance.customer.save(update_fields=["is_active"])
+        if (
+            instance.organization
+            and instance.organization.sms_feature
+            and is_fully_paid
+            and instance.customer.phone
+        ):
+            SMS.send_single_sms(
+                to=instance.customer.phone,
+                message=f"আপনার {month_name_to_bangla.get(instance.billing_month, '')} এর বিল {amount} BDT পরিশোধ হয়েছে - {instance.organization.name or 'M_Online'}",
+            )
+
         return super().update(instance, validated_data)

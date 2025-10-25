@@ -13,7 +13,7 @@ from rest_framework.response import Response
 
 
 # from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
-
+from core.choices import BillingCycle
 from core.permissions import (
     IsAdminUser,
     IsAuthenticated,
@@ -182,6 +182,18 @@ class GenerateBill(APIView):
             organization_id=request.user.organization_id,
         ).select_related("package")
         organization = request.user.organization
+        if not organization:
+            return Response(
+                {"message": "User does not belongs to an organization."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if organization.billing_cycle != BillingCycle.MONTHLY:
+            return Response(
+                {
+                    "message": "Billing can only be generated for organizations with monthly billing cycle."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         organization_name = organization.name or "M_Online"
 
         # Step 2: Get customer IDs with existing payments for current month
@@ -211,12 +223,13 @@ class GenerateBill(APIView):
                     note=f"Auto-generated bill for {month}",
                 )
             )
-            messages.append(
-                {
-                    "to": customer.phone,
-                    "message": f"{month_name_to_bangla.get(month, '')} মাসের বিল {bill_amount}TK পরিশোধ করুন - {organization_name}",
-                }
-            )
+            if customer.phone:
+                messages.append(
+                    {
+                        "to": customer.phone,
+                        "message": f"{month_name_to_bangla.get(month, '')} মাসের বিল {bill_amount}TK পরিশোধ করুন - {organization_name}",
+                    }
+                )
 
         # Bulk create payments
         Payment.objects.bulk_create(payments_to_create)

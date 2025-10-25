@@ -1,6 +1,7 @@
 from celery import shared_task
 from django.utils import timezone
 
+from core.choices import BillingCycle
 from core.models import Organization
 from common.helpers import SMS
 from customer.models import Customer, Payment
@@ -20,6 +21,12 @@ def generate_customer_bills(org_id: int = 1):
     if not organization:
         print(f"No organization found with ID {org_id}.")
         return
+    if organization.billing_cycle != BillingCycle.MONTHLY:
+        print(
+            f"Organization ID {org_id} does not have a monthly billing cycle. Skipping bill generation."
+        )
+        return
+
     organization_name = organization.name or "M_Online"
     month = timezone.now().strftime("%B").upper()
 
@@ -85,6 +92,12 @@ def deactivate_due_payment_customers(org_id: int = 1):
     if not organization:
         print("No organization found with ID 1.")
         return
+    if organization.billing_cycle != BillingCycle.MONTHLY:
+        print(
+            f"Organization ID {org_id} does not have a monthly billing cycle. Skipping deactivation."
+        )
+        return
+
     payments = (
         Payment()
         .get_all_actives()
