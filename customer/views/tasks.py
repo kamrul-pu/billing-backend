@@ -1,4 +1,4 @@
-from core.views import organization
+# from core.views import organization
 
 
 from rest_framework import status
@@ -22,8 +22,8 @@ class GenerateBillTask(APIView):
 
     def get(self, request, *args, **kwargs):
         user = request.user
-
-        if not user.organization:
+        organization = request.user.organization
+        if not organization:
             return Response(
                 {"message": "This user doesn't belongs to any organization"},
                 status=status.HTTP_400_BAD_REQUEST,
