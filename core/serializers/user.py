@@ -76,6 +76,13 @@ class UserDetailSerializer(UserListSerializer):
         )
         read_only_fields = UserListSerializer.Meta.read_only_fields + ()
 
+    def update(self, instance, validated_data):
+        password = validated_data.pop("password", None)
+        # confirm_password = validated_data.get("confirm_password", None)
+        if password:
+            instance.set_password(password)
+        return super().update(instance, validated_data)
+
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(

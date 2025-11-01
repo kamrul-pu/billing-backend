@@ -203,7 +203,7 @@ USE_TZ = True
 # STATIC_ROOT = STATIC_DIR
 # STATIC_URL = "static/"
 STATIC_URL = "https://billing-static.artsensebd.com/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_ROOT = BASE_DIR / "static"
 
 MEDIA_ROOT = MEDIA_DIR
 MEDIA_URL = "/media/"
