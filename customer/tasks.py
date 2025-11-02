@@ -169,6 +169,12 @@ def deactivate_organizations_due_payment_customers():
 
 @shared_task
 def deactivate_expired_subscription_customers(organization: Organization):
+    if organization.billing_cycle == BillingCycle.MONTHLY:
+        print(
+            f"Organization ID {organization.id} has a monthly billing cycle. Skipping expired subscription deactivation."
+        )
+        return
+
     today = timezone.now().date()
     messages = []
     customers_to_update = []
@@ -180,13 +186,11 @@ def deactivate_expired_subscription_customers(organization: Organization):
         organization_id=organization.id,
     )
     for customer in customers:
-        if not customer.is_active and customer.is_free:
+        if not customer.is_active or customer.is_free:
             continue
-
-        print(
-            f"Deactivating customer: {customer.username} due to expired subscription."
-        )
-
+        # print(
+        #     f"Deactivating customer: {customer.username} due to expired subscription."
+        # )
         success, msg = Mikrotik.toggle_ppp_user(
             username=customer.username,
             disable=True,
@@ -218,7 +222,9 @@ def deactivate_expired_subscription_customers(organization: Organization):
 
 @shared_task
 def deactivate_all_organizations_expired_subscription_customers():
-    organizations = Organization().get_all_actives()
+    organizations = (
+        Organization().get_all_actives().filter(billing_cycle=BillingCycle.DAYS30)
+    )
     for org in organizations:
         print(
             f"Deactivating expired subscription customers for organization: {org.name} (ID: {org.id})"
