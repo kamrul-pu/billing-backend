@@ -181,8 +181,8 @@ def deactivate_expired_subscription_customers(organization: Organization):
     customers = Customer.objects.filter(
         is_active=True,
         is_free=False,
-        subsrciption_end_date__isnull=False,
-        subsrciption_end_date__lt=today,
+        subscription_end_date__isnull=False,
+        subscription_end_date__lt=today,
         organization_id=organization.id,
     )
     for customer in customers:

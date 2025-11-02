@@ -1,5 +1,6 @@
 import uuid
 from decimal import Decimal
+from datetime import timedelta
 from django.db import transaction
 import logging
 from django.utils import timezone
@@ -7,6 +8,7 @@ from rest_framework import serializers
 
 from common.helpers import SMS
 from customer.models import Payment, Customer
+from core.choices import BillingCycle
 from core.serializers.user import UserLiteSerializer
 from customer.serializers.customer import CustomerBase
 from customer.utils import month_name_to_bangla
@@ -56,9 +58,10 @@ class PaymentListSerializer(PaymentBase):
             "updated_at",
         )
 
+    @transaction.atomic
     def create(self, validated_data):
         request = self.context["request"]
-        organization = request.user.organization or None
+        organization = getattr(request.user, "organization", None)
         transaction_id = uuid.uuid4()
         payment_date = validated_data.get("payment_date", timezone.now())
         customer_id = validated_data["customer_id"]
@@ -73,42 +76,90 @@ class PaymentListSerializer(PaymentBase):
                 {"message": "Cannot create payment for free customers."}
             )
 
-        try:
-            payment = Payment.objects.get(
-                customer=customer,
-                billing_month=validated_data.get("billing_month", ""),
-            )
-        except Payment.DoesNotExist:
-            payment = None
-        except Payment.MultipleObjectsReturned:
-            logger.error(
-                f"Multiple payments found for customer {customer.id} in {validated_data['billing_month']}"
-            )
+        if not organization:
             raise serializers.ValidationError(
-                {"message": "Multiple payments detected. Contact admin."}
+                {"message": "This user doesn't belong to any organization."}
             )
 
-        if payment and payment.paid:
-            raise serializers.ValidationError(
-                {"message": "Payment for this month has already been made."}
-            )
-
+        billing_cycle = organization.billing_cycle
         bill_amount = customer.package.price if customer.package else Decimal("0.00")
         amount = validated_data.get("amount", Decimal("0.00"))
-
         is_fully_paid = validated_data.get("paid", False) or amount >= bill_amount
 
-        with transaction.atomic():
+        # === Handle Day-Based Subscription (Rolling) ===
+        if billing_cycle == BillingCycle.DAYS30:
+            last_end = customer.subscription_end_date
+            today = timezone.now().date()
+
+            # Determine how many 30-day periods were paid for
+            # Example: if package.price = 300 and paid 900 → 900/300 = 3 → 3 * 30 days
+            paid_months = int(amount // bill_amount) if bill_amount > 0 else 1
+            extend_days = paid_months * 30
+
+            # Extend from either current end or today
+            if last_end and last_end > today:
+                new_end = last_end + timedelta(days=extend_days)
+            else:
+                new_end = today + timedelta(days=extend_days)
+
+            customer.subscription_end_date = new_end
+            customer.save(update_fields=["subscription_end_date"])
+
+            # Create a payment record (no billing month dependency)
+            payment = Payment.objects.create(
+                organization_id=organization.id,
+                customer_id=customer.id,
+                bill_amount=bill_amount,
+                amount=amount,
+                paid=True,  # day-based payments are immediate
+                billing_month=validated_data.get("billing_month", ""),  # not applicable
+                payment_method=validated_data.get("payment_method", "CASH"),
+                payment_date=payment_date,
+                transaction_id=str(transaction_id),
+                entry_by_id=request.user.id,
+                updated_by_id=request.user.id,
+                note=f"Subscription extended by {extend_days} days (until {new_end}) by {request.user.first_name}",
+            )
+
+            print(f"Subscription extended by {extend_days} days, new end: {new_end}")
+            message = (
+                f"আপনার সাবস্ক্রিপশন {customer.subscription_end_date.strftime('%d %B %Y')} পর্যন্ত বর্ধিত হয়েছে। "
+                f"পরিশোধিত পরিমাণ: {amount} BDT - {organization.name or 'M_Online'}"
+            )
+
+        # === Handle Monthly Billing ===
+        elif billing_cycle == BillingCycle.MONTHLY:
+            # Check if there's already a payment for the billing month
+            try:
+                payment = Payment.objects.get(
+                    customer=customer,
+                    billing_month=validated_data.get("billing_month", ""),
+                )
+            except Payment.DoesNotExist:
+                payment = None
+            except Payment.MultipleObjectsReturned:
+                logger.error(
+                    f"Multiple payments found for customer {customer.id} in {validated_data['billing_month']}"
+                )
+                raise serializers.ValidationError(
+                    {"message": "Multiple payments detected. Contact admin."}
+                )
+
+            if payment and payment.paid:
+                raise serializers.ValidationError(
+                    {"message": "Payment for this month has already been made."}
+                )
+
             if payment:
                 # Update existing unpaid payment
                 payment.payment_date = payment_date
                 payment.amount = amount
                 payment.paid = is_fully_paid
                 payment.transaction_id = str(transaction_id)
-                payment.entry_by = request.user
-                payment.updated_by = request.user
+                payment.entry_by_id = request.user.id
+                payment.updated_by_id = request.user.id
                 payment.organization_id = organization.id
-                payment.note = f"Payment updated by {request.user.first_name} {request.user.last_name}"
+                payment.note = f"Payment updated by {request.user.first_name}"
                 payment.save(
                     update_fields=[
                         "payment_date",
@@ -120,16 +171,12 @@ class PaymentListSerializer(PaymentBase):
                         "note",
                     ]
                 )
-                print("Payment updated successfully.")
+                print("Monthly payment updated successfully.")
             else:
-                print(
-                    "Creating new payment record. and organization id is: ",
-                    organization.id,
-                )
                 # Create new payment
                 payment = Payment.objects.create(
                     organization_id=organization.id,
-                    customer=customer,
+                    customer_id=customer.id,
                     bill_amount=bill_amount,
                     amount=amount,
                     paid=is_fully_paid,
@@ -137,17 +184,27 @@ class PaymentListSerializer(PaymentBase):
                     payment_method=validated_data["payment_method"],
                     payment_date=payment_date,
                     transaction_id=str(transaction_id),
-                    entry_by=request.user,
-                    updated_by=request.user,
-                    note=f"Payment received by {request.user.first_name} {request.user.last_name}",
+                    entry_by_id=request.user.id,
+                    updated_by_id=request.user.id,
+                    note=f"Payment received by {request.user.first_name}",
                 )
-                print("New payment created successfully.")
+                print("Monthly payment created successfully.")
 
-            # Activate customer if fully paid and currently inactive
-            if is_fully_paid and not customer.is_active:
-                customer.is_active = True
-                customer.save(update_fields=["is_active"])
-                print("Customer activated due to successful payment.")
+            message = (
+                f"আপনার {month_name_to_bangla.get(validated_data.get('billing_month', ''), '')} এর বিল {amount} BDT পরিশোধ হয়েছে - "
+                f"{organization.name or 'M_Online'}"
+            )
+
+        else:
+            raise serializers.ValidationError(
+                {"message": f"Unsupported billing cycle: {billing_cycle}"}
+            )
+
+        # Activate customer if fully paid and currently inactive
+        if is_fully_paid and not customer.is_active:
+            customer.is_active = True
+            customer.save(update_fields=["is_active"])
+            print("Customer activated due to successful payment.")
 
         if (
             organization
@@ -155,10 +212,7 @@ class PaymentListSerializer(PaymentBase):
             and is_fully_paid
             and customer.phone
         ):
-            SMS.send_single_sms(
-                to=customer.phone,
-                message=f"আপনার {month_name_to_bangla.get(validated_data.get('billing_month', ''), '')} এর বিল {amount} BDT পরিশোধ হয়েছে - {organization.name or 'M_Online'}",
-            )
+            SMS.send_single_sms(to=customer.phone, message=message)
         return payment
 
 

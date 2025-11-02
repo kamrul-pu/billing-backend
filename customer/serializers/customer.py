@@ -29,6 +29,7 @@ class CustomerBase(serializers.ModelSerializer):
             "nid",
             "is_free",
             "username",
+            "subscription_end_date",
         )
         read_only_fields = (
             "id",
