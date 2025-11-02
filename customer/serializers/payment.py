@@ -122,10 +122,7 @@ class PaymentListSerializer(PaymentBase):
             )
 
             print(f"Subscription extended by {extend_days} days, new end: {new_end}")
-            message = (
-                f"আপনার সাবস্ক্রিপশন {customer.subscription_end_date.strftime('%d %B %Y')} পর্যন্ত বর্ধিত হয়েছে। "
-                f"পরিশোধিত পরিমাণ: {amount} BDT - {organization.name or 'M_Online'}"
-            )
+            message = f"বিল {amount} BDT জমা হয়েছে-{organization.name or 'M_Online'}"
 
         # === Handle Monthly Billing ===
         elif billing_cycle == BillingCycle.MONTHLY:
@@ -191,7 +188,7 @@ class PaymentListSerializer(PaymentBase):
                 print("Monthly payment created successfully.")
 
             message = (
-                f"আপনার {month_name_to_bangla.get(validated_data.get('billing_month', ''), '')} এর বিল {amount} BDT পরিশোধ হয়েছে - "
+                f"আপনার {month_name_to_bangla.get(validated_data.get('billing_month', ''), '')} এর বিল {amount} BDT পরিশোধ হয়েছে-"
                 f"{organization.name or 'M_Online'}"
             )
 
@@ -246,7 +243,7 @@ class PaymentDetailSerializer(PaymentBase):
         ):
             SMS.send_single_sms(
                 to=instance.customer.phone,
-                message=f"আপনার {month_name_to_bangla.get(instance.billing_month, '')} এর বিল {amount} BDT পরিশোধ হয়েছে - {instance.organization.name or 'M_Online'}",
+                message=f"আপনার {month_name_to_bangla.get(instance.billing_month, '')} এর বিল {amount} BDT পরিশোধ হয়েছে-{instance.organization.name or 'M_Online'}",
             )
 
         return super().update(instance, validated_data)
