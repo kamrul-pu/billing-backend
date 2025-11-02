@@ -5,6 +5,7 @@ from customer.views.tasks import (
     DeactiveDueCustomer,
     GenerateOrganizationsBillTask,
     DeactiveOrganizationsDueCustomer,
+    DeactiveExpiredSubscriptionCustomer,
 )
 
 urlpatterns = [
@@ -23,5 +24,10 @@ urlpatterns = [
         "/deactive-organizations-due-customer",
         DeactiveOrganizationsDueCustomer.as_view(),
         name="deactive-organizations-due-customer",
+    ),
+    path(
+        "/deactive-expired-subscription-customer",
+        DeactiveExpiredSubscriptionCustomer.as_view(),
+        name="deactive-expired-subscription-customer",
     ),
 ]

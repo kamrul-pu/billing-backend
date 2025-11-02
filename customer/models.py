@@ -92,6 +92,7 @@ class Customer(NameDescriptionBaseModel):
         default=dict,
         help_text="Additional credentials for the customer.",
     )
+    subsrciption_end_date = models.DateField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.name} ({self.phone})"

@@ -14,6 +14,7 @@ from customer.tasks import (
     deactivate_due_payment_customers,
     generate_organizations_bills,
     deactivate_organizations_due_payment_customers,
+    deactivate_all_organizations_expired_subscription_customers,
 )
 
 
@@ -28,6 +29,7 @@ class GenerateBillTask(APIView):
                 {"message": "This user doesn't belongs to any organization"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
         if (
             not organization.router_ip
             or not organization.router_username
@@ -50,7 +52,8 @@ class DeactiveDueCustomer(APIView):
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        if not user.organization:
+        organization = request.user.organization or None
+        if not organization:
             return Response(
                 {"message": "This user doesn't belongs to any organization"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -93,6 +96,19 @@ class DeactiveOrganizationsDueCustomer(APIView):
         return Response(
             {
                 "message": "Deactivate organizations due customers backgroud Task started!"
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class DeactiveExpiredSubscriptionCustomer(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        deactivate_all_organizations_expired_subscription_customers.delay()
+        return Response(
+            {
+                "message": "Deactivate expired subscription customers backgroud Task started!"
             },
             status=status.HTTP_200_OK,
         )

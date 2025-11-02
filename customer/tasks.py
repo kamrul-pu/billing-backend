@@ -165,3 +165,62 @@ def deactivate_organizations_due_payment_customers():
             f"Deactivating due payment customers for organization: {org.name} (ID: {org.id})"
         )
         deactivate_due_payment_customers(org.id)
+
+
+@shared_task
+def deactivate_expired_subscription_customers(organization: Organization):
+    today = timezone.now().date()
+    messages = []
+    customers_to_update = []
+    customers = Customer.objects.filter(
+        is_active=True,
+        is_free=False,
+        subsrciption_end_date__isnull=False,
+        subsrciption_end_date__lt=today,
+        organization_id=organization.id,
+    )
+    for customer in customers:
+        if not customer.is_active and customer.is_free:
+            continue
+
+        print(
+            f"Deactivating customer: {customer.username} due to expired subscription."
+        )
+
+        success, msg = Mikrotik.toggle_ppp_user(
+            username=customer.username,
+            disable=True,
+            organization=organization,
+        )
+        if success:
+            customer.is_active = False
+            customers_to_update.append(customer)
+            messages.append(
+                {
+                    "to": customer.phone,
+                    "message": f"বিল বকেয়া, সংযোগ বন্ধ। চালু করতে বিল পরিশোধ করুন-{organization.name}",
+                }
+            )
+        else:
+            print(f"Error deactivating {customer.username}: ", msg)
+    if customers_to_update:
+        Customer.objects.bulk_update(customers_to_update, fields=["is_active"])
+        print("Expired subscription customers updated successfully!")
+        sms_send: bool = False
+        if messages and organization.sms_feature:
+            sms_send = SMS.send_bulk_sms(messages)
+
+        if sms_send:
+            print("SMS submission successfull!")
+        else:
+            print("Failed to submit messages")
+
+
+@shared_task
+def deactivate_all_organizations_expired_subscription_customers():
+    organizations = Organization().get_all_actives()
+    for org in organizations:
+        print(
+            f"Deactivating expired subscription customers for organization: {org.name} (ID: {org.id})"
+        )
+        deactivate_expired_subscription_customers(org)
