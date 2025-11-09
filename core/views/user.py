@@ -108,7 +108,7 @@ class ForceResetUserPassword(APIView):
             user = self.get_queryset().get(uid=uid)
         except User.DoesNotExist:
             return Response(
-                {"error": "User not found."}, status=status.HTTP_404_NOT_FOUND
+                {"message": "User not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
         serializer = self.serializer_class(data=request.data)
@@ -138,7 +138,7 @@ class UserForgetPassword(APIView):
             user = User.objects.get(phone=phone, is_active=True)
         except User.DoesNotExist:
             return Response(
-                {"detail": "User with the provided phone number does not exist."},
+                {"message": "User with the provided phone number does not exist."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -155,7 +155,7 @@ class UserForgetPassword(APIView):
             if existing_otp:
                 return Response(
                     {
-                        "detail": "You already have an active OTP. Please wait for it to expire."
+                        "message": "You already have an active OTP. Please wait for it to expire."
                     },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
@@ -177,7 +177,7 @@ class UserForgetPassword(APIView):
 
             return Response(
                 {
-                    "detail": "OTP has been sent to your phone number.",
+                    "message": "OTP has been sent to your phone number.",
                     "code": "OTP_SENT",
                 },
                 status=status.HTTP_200_OK,
@@ -193,13 +193,13 @@ class UserForgetPassword(APIView):
             )
         except OTP.DoesNotExist:
             return Response(
-                {"detail": "Invalid OTP."},
+                {"message": "Invalid OTP."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         if timezone.now() > otp_record.created_at + timedelta(minutes=5):
             return Response(
-                {"detail": "OTP has expired."},
+                {"message": "OTP has expired."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -211,7 +211,7 @@ class UserForgetPassword(APIView):
         otp_record.save(update_fields=["is_used"])
 
         return Response(
-            {"detail": "Password reset successfully."},
+            {"message": "Password reset successfully."},
             status=status.HTTP_200_OK,
         )
 
@@ -229,7 +229,7 @@ class ChangeUserPassword(APIView):
             user = request.user
             if not user.check_password(old_password):
                 return Response(
-                    {"error": "Old password is incorrect."},
+                    {"message": "Old password is incorrect."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -303,7 +303,7 @@ class UserLoginRefresh(APIView):
         refresh_token = request.data.get("refresh_token")
         if not refresh_token:
             return Response(
-                {"error": "Refresh token is required"},
+                {"message": "Refresh token is required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -318,4 +318,4 @@ class UserLoginRefresh(APIView):
             )
 
         except AuthenticationFailed as e:
-            return Response({"error": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({"message": str(e)}, status=status.HTTP_401_UNAUTHORIZED)

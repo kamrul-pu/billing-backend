@@ -72,7 +72,7 @@ class CustomerSessionList(APIView):
         )
         if not organization:
             return Response(
-                {"error": "Organization not found."}, status=status.HTTP_404_NOT_FOUND
+                {"message": "Organization not found."}, status=status.HTTP_404_NOT_FOUND
             )
         if (
             not organization.router_ip
@@ -80,10 +80,10 @@ class CustomerSessionList(APIView):
             or not organization.router_password
         ):
             return Response(
-                {"error": "Mikrotik credentials not found."},
+                {"message": "Mikrotik credentials not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
         success, sessions = Mikrotik.get_user_sessions(organization)
         if not success:
-            return Response({"error": sessions}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": sessions}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"sessions": sessions}, status=status.HTTP_200_OK)

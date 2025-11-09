@@ -171,7 +171,9 @@ class ForgetPasswordSerializer(serializers.Serializer):
         confirm_password = attrs.get("confirm_password")
 
         if not phone:
-            raise serializers.ValidationError({"message": "Phone number is required."})
+            raise serializers.ValidationError(
+                {"message": "Phone number is required."}
+            )
 
         if otp:
             if not password or not confirm_password:
@@ -256,14 +258,12 @@ class LoginSerializer(serializers.Serializer):
 
         if not phone:
             raise serializers.ValidationError(
-                {"message": "Phone number is required for login"},
-                status.HTTP_400_BAD_REQUEST,
+                {"message": "Phone number is required for login"}
             )
 
         if not password:
             raise serializers.ValidationError(
-                {"message": "A password is required for login"},
-                status.HTTP_400_BAD_REQUEST,
+                {"message": "A password is required for login"}
             )
 
         user = (
@@ -273,10 +273,8 @@ class LoginSerializer(serializers.Serializer):
         )
 
         if not user or not user.check_password(password):
-            raise serializers.ValidationError(
-                {"message": "Invalid Credentials entered!!!"},
-                status.HTTP_400_BAD_REQUEST,
-            )
+            from rest_framework.exceptions import AuthenticationFailed
+            raise AuthenticationFailed({"message": "Invalid Credentials entered!!!"})
 
         if user.is_superuser or user.kind == UserKind.SUPER_ADMIN:
             return {
@@ -294,12 +292,14 @@ class LoginSerializer(serializers.Serializer):
             user.organization
             and user.organization.subscription_status != SubscriptionStatus.ACTIVE
         ):
-            raise serializers.ValidationError(
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied(
                 {"message": "Your organization is not active. Please contact support."}
             )
 
         if user.organization and not user.organization.subscription_end_date:
-            raise serializers.ValidationError(
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied(
                 {
                     "message": "Your organization subscription end date is not set. Please contact support."
                 }
@@ -309,7 +309,8 @@ class LoginSerializer(serializers.Serializer):
             user.organization
             and user.organization.subscription_end_date < timezone.now().date()
         ):
-            raise serializers.ValidationError(
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied(
                 {
                     "message": "Your organization subscription has expired. Please contact support."
                 }
