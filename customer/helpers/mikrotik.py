@@ -139,10 +139,12 @@ class Mikrotik:
         """
         Terminate an active PPP session by ID.
         :param session_id: str (.id from session)
+        :param organization: Organization instance with router credentials
         :return: bool
         """
         if (
-            not organization.router_ip
+            not organization
+            or not organization.router_ip
             or not organization.router_username
             or not organization.router_password
         ):
@@ -219,7 +221,7 @@ class Mikrotik:
 
             # Step 3: If disabling, terminate active session
             if disable and session_id:
-                if Mikrotik.delete_user_session(session_id):
+                if Mikrotik.delete_user_session(session_id, organization):
                     print(f"[Mikrotik] Terminated session for '{username}'")
                 else:
                     print(
@@ -231,7 +233,7 @@ class Mikrotik:
                     for session in sessions:
                         if session.get("name") == username:
                             session_id = session[".id"]
-                            if Mikrotik.delete_user_session(session_id):
+                            if Mikrotik.delete_user_session(session_id, organization):
                                 print(f"[Mikrotik] Terminated session for '{username}'")
                             else:
                                 print(
