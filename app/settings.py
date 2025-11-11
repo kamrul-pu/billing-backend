@@ -32,6 +32,7 @@ STATIC_DIR = os.path.realpath(os.path.join(HOME_DIR, "staticfiles"))
 # The directory where different applications uploads media files to
 # This can/should be located at ~/media, preferrably outside the git repo
 MEDIA_DIR = os.path.realpath(os.path.join(HOME_DIR, "media"))
+STATIC_LINK = os.environ.get("STATIC_URL", "https://billing-static.artsensebd.com")
 
 
 # Quick-start development settings - unsuitable for production
@@ -202,7 +203,7 @@ USE_TZ = True
 
 # STATIC_ROOT = STATIC_DIR
 # STATIC_URL = "static/"
-STATIC_URL = "https://billing-static.artsensebd.com/"
+STATIC_URL = STATIC_LINK
 STATIC_ROOT = BASE_DIR / "static"
 
 MEDIA_ROOT = MEDIA_DIR
