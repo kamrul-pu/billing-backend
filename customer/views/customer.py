@@ -276,6 +276,12 @@ class Dashboard(APIView):
             current_month_count=Count(
                 "id", filter=Q(paid=True, billing_month=current_month)
             ),
+            current_month_paid_amount=Sum(
+                "amount", filter=Q(paid=True, billing_month=current_month)
+            ),
+            current_month_pending_amount=Sum(
+                "bill_amount", filter=Q(paid=False, billing_month=current_month)
+            ),
         )
 
         # === 2. Recent Data ===
@@ -301,6 +307,8 @@ class Dashboard(APIView):
                 "total_revenue": f"{payment_stats['total_amount'] or 0.0:.2f}",
                 "pending_payments": payment_stats["pending"],
                 "current_month_payments": payment_stats["current_month_count"],
+                "current_month_paid_amount": f"{payment_stats['current_month_paid_amount'] or 0.0:.2f}",
+                "current_month_pending_amount": f"{payment_stats['current_month_pending_amount'] or 0.0:.2f}",
                 # "recent_customers": CustomerListSerializer(
                 #     recent_customers, many=True
                 # ).data,

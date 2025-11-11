@@ -19,6 +19,7 @@ class OrganizationBase(serializers.ModelSerializer):
             "logo",
             "allowed_customer",
             "total_customer",
+            "billing_cycle",
         )
         read_only_fields = ("id", "uid", "subscription_end_date", "logo")
 
@@ -34,6 +35,9 @@ class OrganizationLiteSerializer(serializers.Serializer):
     subscription_end_date = serializers.DateField(required=False, allow_null=True)
     allowed_customer = serializers.IntegerField(required=False, allow_null=True)
     total_customer = serializers.IntegerField(required=False, allow_null=True)
+    billing_cycle = serializers.CharField(
+        max_length=20, required=False, allow_blank=True
+    )
 
 
 class OrganizationListSerializer(OrganizationBase):
