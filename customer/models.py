@@ -3,6 +3,7 @@
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+from django.utils import timezone
 
 # from customer.utils import toggle_ppp_user
 from customer.helpers import Mikrotik
@@ -130,6 +131,11 @@ class Payment(NameDescriptionBaseModel):
         default=Months.JANUARY,
         help_text="Month for which the payment is made.",
     )
+    billing_year = models.IntegerField(
+        db_index=True,
+        help_text="Year for which the payment is made.",
+        default=timezone.now().year,
+    )
     payment_method = models.CharField(
         max_length=32,
         choices=PaymentMethod.choices,
@@ -152,6 +158,13 @@ class Payment(NameDescriptionBaseModel):
         verbose_name = "Payment"
         verbose_name_plural = "Payments"
         ordering = ["-created_at"]
+        # Ensure unique payment per customer per month per year
+        # constraints = [
+        #     models.UniqueConstraint(
+        #         fields=["customer", "billing_month", "billing_year", "organization"],
+        #         name="unique_payment_per_customer_month_year",
+        #     )
+        # ]
 
 
 @receiver(pre_save, sender=Customer)
