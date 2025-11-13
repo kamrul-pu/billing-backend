@@ -29,6 +29,7 @@ def generate_customer_bills(org_id: int = 1):
 
     organization_name = organization.name or "M_Online"
     month = timezone.now().strftime("%B").upper()
+    year = timezone.now().year
 
     # Step 1: Get all active customers
     active_customers = Customer.objects.filter(
@@ -39,9 +40,9 @@ def generate_customer_bills(org_id: int = 1):
 
     organization_name = organization.name or "M_Online"
 
-    # Step 2: Get customer IDs with existing payments for current month
+    # Step 2: Get customer IDs with existing payments for current month and year
     existing_payments = Payment.objects.filter(
-        billing_month=month, organization_id=org_id
+        billing_month=month, billing_year=year, organization_id=org_id
     )
     paid_customer_ids = set(existing_payments.values_list("customer_id", flat=True))
 
@@ -59,9 +60,10 @@ def generate_customer_bills(org_id: int = 1):
                 bill_amount=bill_amount,
                 amount=0.0,
                 billing_month=month,
+                billing_year=year,
                 payment_method="OTHER",
                 paid=False,
-                note=f"Auto-generated bill for {month}",
+                note=f"Auto-generated bill for {month} {year}",
             )
         )
         messages.append(
@@ -88,6 +90,7 @@ def generate_customer_bills(org_id: int = 1):
 @shared_task
 def deactivate_due_payment_customers(org_id: int = 1):
     month = timezone.now().strftime("%B").upper()
+    year = timezone.now().year
     organization = Organization.objects.filter(id=org_id).first()
     if not organization:
         print("No organization found with ID 1.")
@@ -101,7 +104,7 @@ def deactivate_due_payment_customers(org_id: int = 1):
     payments = (
         Payment()
         .get_all_actives()
-        .filter(billing_month=month, paid=False, organization_id=org_id)
+        .filter(billing_month=month, billing_year=year, paid=False, organization_id=org_id)
         .select_related("customer")
     )
     organization_name = organization.name or "M_Online"

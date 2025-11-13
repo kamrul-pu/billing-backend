@@ -22,9 +22,9 @@ admin.site.register(Customer, CustomerAdmin)
 
 
 class PaymentAdmin(ModelAdmin):
-    list_display = ("id", "customer", "amount", "billing_month", "entry_by", "paid", "payment_date")
-    search_fields = ("customer__name", "amount", "billing_month", "entry_by__first_name")
-    list_filter = ("paid", "billing_month", "entry_by")
+    list_display = ("id", "customer", "amount", "billing_month", "billing_year", "entry_by", "paid", "payment_date")
+    search_fields = ("customer__name", "amount", "billing_month", "billing_year", "entry_by__first_name")
+    list_filter = ("paid", "billing_month", "billing_year", "entry_by")
 
 
 admin.site.register(Payment, PaymentAdmin)

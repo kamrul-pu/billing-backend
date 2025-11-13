@@ -1,4 +1,5 @@
 from django.db.models import Q
+from django.utils import timezone
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import SAFE_METHODS
 
@@ -45,6 +46,7 @@ class PaymentsList(ListCreateAPIView):
         customer_phone = self.request.query_params.get("customer_phone", None)
         collected_by = self.request.query_params.get("collected_by", None)
         month = self.request.query_params.get("month", None)
+        year = self.request.query_params.get("year", None)
         payment_method = self.request.query_params.get("payment_method", None)
         payment_date = self.request.query_params.get("payment_date", None)
 
@@ -54,6 +56,17 @@ class PaymentsList(ListCreateAPIView):
             queryset = queryset.filter(paid=paid)
         if month:
             queryset = queryset.filter(billing_month=month)
+        # Year filter: default to current year if not provided
+        if year:
+            try:
+                year = int(year)
+                queryset = queryset.filter(billing_year=year)
+            except (ValueError, TypeError):
+                # If invalid year provided, default to current year
+                queryset = queryset.filter(billing_year=timezone.now().year)
+        else:
+            # Default to current year if year not specified
+            queryset = queryset.filter(billing_year=timezone.now().year)
         if collected_by:
             queryset = queryset.filter(
                 Q(entry_by__first_name__icontains=collected_by)

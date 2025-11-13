@@ -27,6 +27,7 @@ class PaymentBase(serializers.ModelSerializer):
             "bill_amount",
             "amount",
             "billing_month",
+            "billing_year",
             "payment_method",
             "paid",
             "transaction_id",
@@ -113,6 +114,7 @@ class PaymentListSerializer(PaymentBase):
                 amount=amount,
                 paid=True,  # day-based payments are immediate
                 billing_month=validated_data.get("billing_month", ""),  # not applicable
+                billing_year=timezone.now().year,  # Use current year for day-based payments
                 payment_method=validated_data.get("payment_method", "CASH"),
                 payment_date=payment_date,
                 transaction_id=str(transaction_id),
@@ -126,17 +128,22 @@ class PaymentListSerializer(PaymentBase):
 
         # === Handle Monthly Billing ===
         elif billing_cycle == BillingCycle.MONTHLY:
-            # Check if there's already a payment for the billing month
+            # Get billing month and year (default to current year if not provided)
+            billing_month = validated_data.get("billing_month", "")
+            billing_year = validated_data.get("billing_year", timezone.now().year)
+            
+            # Check if there's already a payment for the billing month and year
             try:
                 payment = Payment.objects.get(
                     customer=customer,
-                    billing_month=validated_data.get("billing_month", ""),
+                    billing_month=billing_month,
+                    billing_year=billing_year,
                 )
             except Payment.DoesNotExist:
                 payment = None
             except Payment.MultipleObjectsReturned:
                 logger.error(
-                    f"Multiple payments found for customer {customer.id} in {validated_data['billing_month']}"
+                    f"Multiple payments found for customer {customer.id} in {billing_month} {billing_year}"
                 )
                 raise serializers.ValidationError(
                     {"message": "Multiple payments detected. Contact admin."}
@@ -156,6 +163,7 @@ class PaymentListSerializer(PaymentBase):
                 payment.entry_by_id = request.user.id
                 payment.updated_by_id = request.user.id
                 payment.organization_id = organization.id
+                payment.billing_year = billing_year  # Ensure year is set
                 payment.note = f"Payment updated by {request.user.first_name}"
                 payment.save(
                     update_fields=[
@@ -165,6 +173,7 @@ class PaymentListSerializer(PaymentBase):
                         "transaction_id",
                         "entry_by",
                         "updated_by",
+                        "billing_year",
                         "note",
                     ]
                 )
@@ -177,7 +186,8 @@ class PaymentListSerializer(PaymentBase):
                     bill_amount=bill_amount,
                     amount=amount,
                     paid=is_fully_paid,
-                    billing_month=validated_data["billing_month"],
+                    billing_month=billing_month,
+                    billing_year=billing_year,
                     payment_method=validated_data["payment_method"],
                     payment_date=payment_date,
                     transaction_id=str(transaction_id),

@@ -174,6 +174,11 @@ class GenerateBill(APIView):
 
     def post(self, request, *args, **kwargs):
         month = request.query_params.get("month", timezone.now().strftime("%B").upper())
+        # Get year from query params, default to current year
+        try:
+            year = int(request.query_params.get("year", timezone.now().year))
+        except (ValueError, TypeError):
+            year = timezone.now().year
 
         # Step 1: Get all active customers
         active_customers = Customer.objects.filter(
@@ -196,9 +201,9 @@ class GenerateBill(APIView):
             )
         organization_name = organization.name or "M_Online"
 
-        # Step 2: Get customer IDs with existing payments for current month
+        # Step 2: Get customer IDs with existing payments for current month and year
         existing_payments = Payment.objects.filter(
-            billing_month=month, organization_id=request.user.organization_id
+            billing_month=month, billing_year=year, organization_id=request.user.organization_id
         )
         paid_customer_ids = set(existing_payments.values_list("customer_id", flat=True))
 
@@ -218,9 +223,10 @@ class GenerateBill(APIView):
                     bill_amount=bill_amount,
                     amount=0.0,
                     billing_month=month,
+                    billing_year=year,
                     payment_method="OTHER",
                     paid=False,
-                    note=f"Auto-generated bill for {month}",
+                    note=f"Auto-generated bill for {month} {year}",
                 )
             )
             if customer.phone:
