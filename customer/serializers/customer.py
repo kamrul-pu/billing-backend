@@ -43,6 +43,13 @@ class CustomerListSerializer(CustomerBase):
     package = PackageBase(read_only=True)
     package_id = serializers.IntegerField(write_only=True, required=False)
 
+    login_password = serializers.CharField(
+        write_only=True,
+        required=False,
+        style={"input_type": "password"},
+        help_text="Login password for customer authentication. If not provided, phone number will be used as default.",
+    )
+
     class Meta(CustomerBase.Meta):
         fields = CustomerBase.Meta.fields + (
             "package",
@@ -55,6 +62,7 @@ class CustomerListSerializer(CustomerBase):
             "password",
             "connection_type",
             "credentials",
+            "login_password",
         )
         read_only_fields = CustomerBase.Meta.read_only_fields + ()
         write_only_fields = ("first_name", "last_name", "add")
@@ -120,7 +128,20 @@ class CustomerListSerializer(CustomerBase):
         # Save the entry_by and update_by fields
         validated_data["entry_by_id"] = self.context["request"].user.id
         validated_data["updated_by_id"] = self.context["request"].user.id
-        return Customer.objects.create(**validated_data)
+        
+        # Handle login password
+        login_password = validated_data.pop("login_password", None)
+        customer = Customer.objects.create(**validated_data)
+        
+        # Set login password if provided, otherwise set default (phone number as default)
+        if login_password:
+            customer.set_login_password(login_password)
+        else:
+            # Default password is the phone number (customer can change later)
+            default_password = phone or str(customer.id)
+            customer.set_login_password(default_password)
+        
+        return customer
 
 
 class CustomerDetailSerializer(CustomerBase):
@@ -182,3 +203,74 @@ class StatusToggleSerializer(serializers.Serializer):
 
     username = serializers.CharField(required=True, max_length=150)
     is_active = serializers.BooleanField(required=True)
+
+
+class CustomerLoginSerializer(serializers.Serializer):
+    """Serializer for customer login."""
+
+    phone = serializers.CharField(required=True)
+    password = serializers.CharField(
+        max_length=255,
+        write_only=True,
+        style={"input_type": "password"},
+    )
+
+    def validate(self, attrs):
+        phone = attrs.get("phone")
+        password = attrs.get("password")
+
+        if not phone:
+            raise serializers.ValidationError(
+                {"message": "Phone number is required for login"}
+            )
+
+        if not password:
+            raise serializers.ValidationError(
+                {"message": "A password is required for login"}
+            )
+
+        customer = (
+            Customer.objects.filter(phone=phone, is_active=True)
+            .select_related("organization", "package")
+            .first()
+        )
+
+        if not customer:
+            from rest_framework.exceptions import AuthenticationFailed
+            raise AuthenticationFailed({"message": "Invalid Credentials entered!!!"})
+
+        if not customer.check_login_password(password):
+            from rest_framework.exceptions import AuthenticationFailed
+            raise AuthenticationFailed({"message": "Invalid Credentials entered!!!"})
+
+        return {
+            "customer_id": customer.id,
+            "customer_uid": str(customer.uid),
+            "name": customer.name,
+            "phone": customer.phone,
+            "email": customer.email,
+            "organization": {
+                "id": customer.organization_id,
+                "name": customer.organization.name if customer.organization else None,
+            } if customer.organization else None,
+        }
+
+
+class CustomerProfileSerializer(CustomerBase):
+    """Serializer for customer profile (self view)."""
+
+    package = PackageBase(read_only=True)
+
+    class Meta(CustomerBase.Meta):
+        fields = CustomerBase.Meta.fields + (
+            "package",
+            "connection_start_date",
+            "subscription_end_date",
+            "is_active",
+        )
+        read_only_fields = CustomerBase.Meta.read_only_fields + (
+            "package",
+            "connection_start_date",
+            "subscription_end_date",
+            "is_active",
+        )

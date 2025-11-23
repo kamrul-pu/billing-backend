@@ -43,6 +43,8 @@ urlpatterns = [
     path("api/v1/packages", include("customer.urls.package"), name="package-urls"),
     # include customer endpoints
     path("api/v1/customers", include("customer.urls.customer"), name="customer-urls"),
+    # include customer authentication and self-service endpoints
+    path("api/v1/customers", include("customer.urls.customer_auth"), name="customer-auth-urls"),
     # include payment endpoints
     path("api/v1/payments", include("customer.urls.payment"), name="payment-urls"),
     # include core endpoints

@@ -1,5 +1,6 @@
 """Customer models for the application."""
 
+from django.contrib.auth.hashers import make_password, check_password
 from django.db import models
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -94,6 +95,22 @@ class Customer(NameDescriptionBaseModel):
         help_text="Additional credentials for the customer.",
     )
     subscription_end_date = models.DateField(blank=True, null=True)
+    login_password = models.CharField(
+        max_length=128,
+        blank=True,
+        help_text="Hashed password for customer login authentication.",
+    )
+
+    def set_login_password(self, raw_password):
+        """Set the login password for the customer."""
+        self.login_password = make_password(raw_password)
+        self.save(update_fields=["login_password"])
+
+    def check_login_password(self, raw_password):
+        """Check if the provided password matches the customer's login password."""
+        if not self.login_password:
+            return False
+        return check_password(raw_password, self.login_password)
 
     def __str__(self):
         return f"{self.name} ({self.phone})"
