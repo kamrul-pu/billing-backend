@@ -72,7 +72,7 @@ class Organization(NameDescriptionBaseModel):
     # Organization status
     # is_active = models.BooleanField(default=True)
     subscription_end_date = models.DateField(null=True, blank=True)
-    logo = models.ImageField(upload_to="organizations/", blank=True)
+    logo = models.URLField(blank=True, null=True)
     allowed_customer = models.IntegerField(default=0)
     total_customer = models.IntegerField(default=0)
     billing_cycle = models.CharField(
@@ -164,12 +164,9 @@ class User(AbstractBaseUser, BaseModelWithUID):
         choices=UserGender.choices,
         default=UserGender.UNKNOWN,
     )
-    image = models.ImageField(
-        "Profile_image",
-        upload_to="profile_images/",
-        default="profile_images/default.png",
+    image = models.URLField(
         blank=True,
-        null=True,
+        null=True
     )
     is_active = models.BooleanField(
         default=True,

@@ -1,167 +1,69 @@
-# # utils.py
-# import requests
-# from django.conf import settings
+# import boto3
+# from botocore.client import Config
 
-# MIKROTIK_URL = "http://103.146.16.148"
-# MIKROTIK_USER = "kamrul"
-# MIKROTIK_PASS = "kamrul#2025"
+# # If using AWS S3:
+# session = boto3.session.Session()
 
+# # s3 = session.client(
+# #     "s3",
+# #     aws_access_key_id="YOUR_ACCESS_KEY",
+# #     aws_secret_access_key="YOUR_SECRET_KEY",
+# #     region_name="YOUR_REGION",
+# # )
 
-# def toggle_ppp_user(username, disable=True):
-#     try:
-#         # First, get the secret by name
-#         response = requests.post(
-#             f"{MIKROTIK_URL}/rest/ppp/secret/print",
-#             json={".query": [f"name={username}"]},
-#             auth=(MIKROTIK_USER, MIKROTIK_PASS),
-#             verify=False,  # because of self-signed cert; use CA in prod
-#         )
-#         if response.status_code != 200:
-#             return False, "User not found or API error"
+# # If using MinIO or any S3-compatible provider (example):
 
-#         data = response.json()
-#         # if not data:
-#         #     return False, "No such user"
-#         print("data: ", data)
-
-#         secret_id = data[0][".id"]
-#         disabled_str = "true" if disable else "false"
-
-#         # Update disabled status
-#         patch_resp = requests.patch(
-#             f"{MIKROTIK_URL}/rest/ppp/secret/{secret_id}",
-#             json={"disabled": disabled_str},
-#             auth=(MIKROTIK_USER, MIKROTIK_PASS),
-#             verify=False,
-#         )
-
-#         if patch_resp.status_code == 200:
-#             # Step 3: Terminate active session
-#             # active_sessions = requests.get(
-#             #     f"{MIKROTIK_URL}/rest/ppp/active",
-#             #     auth=(MIKROTIK_USER, MIKROTIK_PASS),
-#             #     verify=False,
-#             # ).json()
-
-#             # for session in active_sessions:
-#             #     if session.get("name") == username:
-#             #         requests.delete(
-#             #             f"{MIKROTIK_URL}/rest/ppp/active/{session['.id']}",
-#             #             auth=(MIKROTIK_USER, MIKROTIK_PASS),
-#             #             verify=False,
-#             #         )
-#             #         break
-#             return True, "User updated"
-#         else:
-#             return False, patch_resp.json().get("message", "Unknown error")
-
-#     except Exception as e:
-#         return False, str(e)
+# s3 = boto3.client(
+#     "s3",
+#     endpoint_url="https://media.billsheba.com",
+#     aws_access_key_id="admin",
+#     aws_secret_access_key="Letmein2211##",
+#     config=Config(signature_version="s3v4"),
+#     region_name="us-east-1",
+# )
 
 
-# toggle_ppp_user("AKHI", False)
+# # Path of local file
+# local_file = "me.jpg"
 
+# # Key (path inside your bucket)
+# bucket_key = "media/me.jpg"
 
-# utils.py
-import requests
-from django.conf import settings
+# # Name of your bucket
+# bucket_name = "bill-sheba-media"
 
-# MikroTik Router API Settings
-MIKROTIK_URL = "http://103.146.16.148"  # Use http:// or https://
-MIKROTIK_USER = "kamrul"
-MIKROTIK_PASS = "kamrul#2025"
+# try:
+#     s3.upload_file(local_file, bucket_name, bucket_key)
+#     print("Uploaded successfully!")
+# except Exception as e:
+#     print("Upload failed:", e)
 
+import boto3
+from botocore.client import Config
 
-def toggle_ppp_user(username, disable=True):
-    """
-    Enable or disable a PPP user on MikroTik and optionally terminate their active session.
+# Create MinIO S3 client
+s3 = boto3.client(
+    "s3",
+    endpoint_url="https://media.billsheba.com",
+    aws_access_key_id="admin",
+    aws_secret_access_key="Letmein2211##",
+    config=Config(signature_version="s3v4"),
+    region_name="us-east-1",
+)
 
-    Args:
-        username (str): The PPP username (name field in /ppp secret)
-        disable (bool): If True, disables the user. If False, enables them.
+local_file = "me.jpg"
+bucket_name = "bill-sheba-media"
+bucket_key = "media/me.jpg"
 
-    Returns:
-        tuple: (success: bool, message: str)
-    """
-    try:
-        # Step 1: Find the PPP secret by username
-        query_url = f"{MIKROTIK_URL}/rest/ppp/secret/print"
-        response = requests.post(
-            query_url,
-            json={".query": [f"name={username}"]},
-            auth=(MIKROTIK_USER, MIKROTIK_PASS),
-            verify=False,  # Set to True in production with valid CA
-        )
+try:
+    # Upload file (NO ACL!)
+    s3.upload_file(local_file, bucket_name, bucket_key)
 
-        if response.status_code != 200:
-            return False, f"Failed to query user: HTTP {response.status_code}"
+    # Public URL (CORRECT)
+    public_url = f"https://media.billsheba.com/{bucket_name}/{bucket_key}"
 
-        data = response.json()
+    print("Uploaded successfully!")
+    print("Public URL:", public_url)
 
-        if not data:
-            return False, "User not found in PPP secrets"
-
-        secret = data[0]
-        secret_id = secret[".id"]
-        disabled_str = "true" if disable else "false"
-
-        # Step 2: Update the 'disabled' status of the PPP secret
-        patch_url = f"{MIKROTIK_URL}/rest/ppp/secret/{secret_id}"
-        patch_resp = requests.patch(
-            patch_url,
-            json={"disabled": disabled_str},
-            auth=(MIKROTIK_USER, MIKROTIK_PASS),
-            verify=False,
-        )
-
-        if patch_resp.status_code != 200:
-            error_detail = patch_resp.json().get("message", "Unknown error")
-            return False, f"Failed to update user: {error_detail}"
-
-        # Step 3: If disabling, check and terminate active session
-        if disable:
-            active_sessions_url = f"{MIKROTIK_URL}/rest/ppp/active"
-            active_resp = requests.get(
-                active_sessions_url,
-                auth=(MIKROTIK_USER, MIKROTIK_PASS),
-                verify=False,
-            )
-
-            if active_resp.status_code == 200:
-                active_sessions = active_resp.json()
-                for session in active_sessions:
-                    if session.get("name") == username:
-                        session_id = session[".id"]
-                        delete_url = f"{MIKROTIK_URL}/rest/ppp/active/{session_id}"
-                        delete_resp = requests.delete(
-                            delete_url,
-                            auth=(MIKROTIK_USER, MIKROTIK_PASS),
-                            verify=False,
-                        )
-                        if delete_resp.status_code == 200:
-                            print(f"Terminated active session for {username}")
-                        else:
-                            print(
-                                f"Failed to terminate session {session_id}: {delete_resp.text}"
-                            )
-                        break  # Only one session per user typically
-            else:
-                print("Warning: Could not fetch active sessions")
-
-        return True, "User updated successfully"
-
-    except requests.exceptions.RequestException as e:
-        return False, f"Network error: {str(e)}"
-    except Exception as e:
-        return False, f"Unexpected error: {str(e)}"
-
-
-# Test the function
-if __name__ == "__main__":
-    # Example: Enable user 'AKHI'
-    success, msg = toggle_ppp_user("AKHI", disable=False)
-    print("Success:" if success else "Error:", msg)
-
-    # Example: Disable user 'AKHI'
-    # success, msg = toggle_ppp_user("AKHI", disable=True)
-    # print("Success:" if success else "Error:", msg)
+except Exception as e:
+    print("Upload failed:", e)
