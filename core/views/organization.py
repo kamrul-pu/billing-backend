@@ -62,14 +62,14 @@ class CustomerSessionList(APIView):
     permission_classes = [IsAdminUser | IsManager]
 
     def get(self, request, *args, **kwargs):
-        print("API CALLED")
+        # print("API CALLED")
         organization = request.user.organization
-        print(
-            "Organizaton: ",
-            organization.router_ip,
-            organization.router_username,
-            organization.router_password,
-        )
+        # print(
+        #     "Organizaton: ",
+        #     organization.router_ip,
+        #     organization.router_username,
+        #     organization.router_password,
+        # )
         if not organization:
             return Response(
                 {"message": "Organization not found."}, status=status.HTTP_404_NOT_FOUND

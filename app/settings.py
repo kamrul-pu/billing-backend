@@ -53,7 +53,7 @@ ALLOWED_HOSTS = os.environ.get(
     "DJANGO_ALLOWED_HOSTS", "localhost,htpp://127.0.0.1,http://0.0.0.0"
 ).split(",")
 
-print("ALLOWED HOSTS: ", ALLOWED_HOSTS)
+# print("ALLOWED HOSTS: ", ALLOWED_HOSTS)
 # CSRF_TRUSTED_ORIGINS = os.getenv(
 #     "DJANGO_CSRF_TRUSTED_ORIGINS", "https://127.0.0.1"
 # ).split(",")
@@ -62,7 +62,7 @@ print("ALLOWED HOSTS: ", ALLOWED_HOSTS)
 CSRF_TRUSTED_ORIGINS = os.environ.get(
     "DJANGO_CSRF_TRUSTED_ORIGINS", "http://localhost,http://127.0.0.1,http://0.0.0.0"
 ).split(",")
-print("CSRF_TRUSTED_ORIGINS: ", CSRF_TRUSTED_ORIGINS)
+# print("CSRF_TRUSTED_ORIGINS: ", CSRF_TRUSTED_ORIGINS)
 MIKROTIK_URL = os.environ.get(
     "MIKROTIK_URL", "http://103.146.16.148"
 )  # Use http:// or https://
