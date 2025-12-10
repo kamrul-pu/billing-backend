@@ -13,6 +13,8 @@ from core.models import User, Organization, Subscription, OTP
 class UserAdmin(BaseUserAdmin, ModelAdmin):
     """Defines the admin pages for users."""
 
+    # Disable Unfold auto-added tracking fields
+    unfold_include_tracked_fields = False
     ordering = ["-id"]
     list_display = [
         "id",
