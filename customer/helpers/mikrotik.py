@@ -160,7 +160,7 @@ class Mikrotik:
                 verify=False,
             )
 
-            if response.status_code == 200:
+            if response.status_code in [200, 204]:
                 return True
             else:
                 print(
