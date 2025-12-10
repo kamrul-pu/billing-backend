@@ -164,10 +164,7 @@ class User(AbstractBaseUser, BaseModelWithUID):
         choices=UserGender.choices,
         default=UserGender.UNKNOWN,
     )
-    image = models.URLField(
-        blank=True,
-        null=True
-    )
+    image = models.URLField(blank=True, null=True)
     is_active = models.BooleanField(
         default=True,
     )
@@ -200,6 +197,9 @@ class User(AbstractBaseUser, BaseModelWithUID):
     class Meta:
         verbose_name = "System User"
         verbose_name_plural = "System Users"
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name} ({self.phone})"
 
 
 class OTP(BaseModelWithUID):
