@@ -18,7 +18,7 @@
     return this;
   };
 
-  $.fn.djangoFilterSelect2 = function () {
+  $.fn.djangoAdminSelect2 = function () {
     $.each(this, function (i, element) {
       $(element).select2({
         ajax: {
@@ -40,6 +40,13 @@
   $(function () {
     $(".unfold-admin-autocomplete.admin-autocomplete").djangoCustomSelect2();
 
-    $(".unfold-filter-autocomplete.admin-autocomplete").djangoFilterSelect2();
+    $(".admin-autocomplete")
+      .not(".unfold-admin-autocomplete")
+      .not("[name*=__prefix__]")
+      .djangoAdminSelect2();
+  });
+
+  document.addEventListener("formset:added", (event) => {
+    $(event.target).find(".admin-autocomplete").djangoAdminSelect2();
   });
 }
