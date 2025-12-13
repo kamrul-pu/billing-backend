@@ -201,6 +201,16 @@ class User(AbstractBaseUser, BaseModelWithUID):
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.phone})"
 
+    @property
+    def username(self):
+        """Compatibility property for templates accessing `user.username`.
+
+        The application uses `phone` as `USERNAME_FIELD`. Some admin templates or
+        third-party code still access `user.username`. Map the property to the
+        configured `USERNAME_FIELD` to avoid template errors.
+        """
+        return getattr(self, self.USERNAME_FIELD)
+
 
 class OTP(BaseModelWithUID):
     """Model to store OTPs for user verification."""

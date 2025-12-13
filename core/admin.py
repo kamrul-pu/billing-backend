@@ -14,8 +14,8 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
     """Defines the admin pages for users."""
 
     # Disable Unfold auto-added tracking fields
-    unfold_include_tracked_fields = False
-    unfold_exclude = ("created_by", "updated_by", "created_at", "updated_at")
+    # unfold_include_tracked_fields = False
+    # unfold_exclude = ("created_by", "updated_by", "created_at", "updated_at")
 
     ordering = ["-id"]
     list_display = [

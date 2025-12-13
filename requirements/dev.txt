@@ -2,7 +2,7 @@ celery[redis]
 # django-celery-beat
 dj-database-url
 Django
-django-cleanup
+# django-cleanup
 django-cors-headers
 django-silk
 django-unfold

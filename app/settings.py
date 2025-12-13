@@ -32,7 +32,7 @@ STATIC_DIR = os.path.realpath(os.path.join(HOME_DIR, "staticfiles"))
 # The directory where different applications uploads media files to
 # This can/should be located at ~/media, preferrably outside the git repo
 MEDIA_DIR = os.path.realpath(os.path.join(HOME_DIR, "media"))
-STATIC_LINK = os.environ.get("STATIC_URL", "https://billing-static.artsensebd.com")
+STATIC_LINK = os.environ.get("STATIC_URL", "https://static-django.billsheba.com")
 
 
 # Quick-start development settings - unsuitable for production
@@ -88,7 +88,7 @@ PROJECT_APPS = [
 
 THIRD_PARTY_APPS = [
     "corsheaders",
-    "django_cleanup.apps.CleanupConfig",
+    # "django_cleanup.apps.CleanupConfig",
     "rest_framework",
 ]
 
