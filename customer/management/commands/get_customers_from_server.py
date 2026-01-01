@@ -7,9 +7,9 @@ import requests
 from django.conf import settings
 
 # MikroTik Router API Settings
-MIKROTIK_URL = "http://103.146.16.148"  # Use http:// or https://
-MIKROTIK_USER = "kamrul"
-MIKROTIK_PASS = "kamrul#2025"
+MIKROTIK_URL = settings.MIKROTIK_URL  # Use http:// or https://
+MIKROTIK_USER = settings.MIKROTIK_USER
+MIKROTIK_PASS = settings.MIKROTIK_PASS
 
 
 def get_users_from_server(organization: Organization):

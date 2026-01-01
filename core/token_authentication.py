@@ -17,8 +17,8 @@ User = get_user_model()
 class JWTAuthentication(BaseAuthentication):
     """Custom authentication class using JSON Web Tokens (JWT)."""
 
-    ACCESS_TOKEN_LIFETIME = timedelta(days=7)  # 7 days for access token
-    REFRESH_TOKEN_LIFETIME = timedelta(days=30)  # 30 days for refresh token
+    ACCESS_TOKEN_LIFETIME = timedelta(days=1)  # 1 days for access token
+    REFRESH_TOKEN_LIFETIME = timedelta(days=7)  # 7 days for refresh token
 
     def authenticate(self, request):
         """
