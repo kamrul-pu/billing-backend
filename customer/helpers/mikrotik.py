@@ -2,13 +2,13 @@ import requests
 from django.conf import settings
 
 # Load from Django settings
-MIKROTIK_URL = settings.MIKROTIK_URL
-MIKROTIK_USER = settings.MIKROTIK_USER
-MIKROTIK_PASS = settings.MIKROTIK_PASS
-MIKROTIK_VERIFY_SSL = getattr(
-    settings, "MIKROTIK_VERIFY_SSL", False
-)  # Default: False for dev
-REQUEST_TIMEOUT = getattr(settings, "MIKROTIK_REQUEST_TIMEOUT", 10)  # Seconds
+# MIKROTIK_URL = settings.MIKROTIK_URL
+# MIKROTIK_USER = settings.MIKROTIK_USER
+# MIKROTIK_PASS = settings.MIKROTIK_PASS
+# MIKROTIK_VERIFY_SSL = getattr(
+#     settings, "MIKROTIK_VERIFY_SSL", False
+# )  # Default: False for dev
+# REQUEST_TIMEOUT = getattr(settings, "MIKROTIK_REQUEST_TIMEOUT", 10)  # Seconds
 
 
 class Mikrotik:

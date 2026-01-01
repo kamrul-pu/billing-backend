@@ -63,11 +63,11 @@ CSRF_TRUSTED_ORIGINS = os.environ.get(
     "DJANGO_CSRF_TRUSTED_ORIGINS", "http://localhost,http://127.0.0.1,http://0.0.0.0"
 ).split(",")
 # print("CSRF_TRUSTED_ORIGINS: ", CSRF_TRUSTED_ORIGINS)
-MIKROTIK_URL = os.environ.get(
-    "MIKROTIK_URL", "http://103.146.16.148"
-)  # Use http:// or https://
-MIKROTIK_USER = os.environ.get("MIKROTIK_USER", "kamrul")
-MIKROTIK_PASS = os.environ.get("MIKROTIK_PASS", "kamrul#2025")
+# MIKROTIK_URL = os.environ.get(
+#     "MIKROTIK_URL", ""
+# )  # Use http:// or https://
+# MIKROTIK_USER = os.environ.get("MIKROTIK_USER", "")
+# MIKROTIK_PASS = os.environ.get("MIKROTIK_PASS", "")
 
 # Application definition
 
@@ -262,7 +262,7 @@ import app.jwt_schema_extension
 if ENABLE_DOC:
     REST_FRAMEWORK["DEFAULT_SCHEMA_CLASS"] = "drf_spectacular.openapi.AutoSchema"
     SPECTACULAR_SETTINGS = {
-        "TITLE": "Mikrolink API",
+        "TITLE": "Billsheba API",
         "DESCRIPTION": "Your Trusted Network Partner",
         "VERSION": "1.0.0",
         "SERVE_INCLUDE_SCHEMA": False,  # optional
