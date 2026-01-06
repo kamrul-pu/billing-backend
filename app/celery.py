@@ -1,8 +1,10 @@
+"""
+celery worker configuration
+"""
+
 import os
-from termios import BRKINT
+
 from celery import Celery
-from celery.schedules import crontab
-import random
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "app.settings")
 
@@ -14,11 +16,7 @@ redis_url = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/0")
 
 cel_app.conf.broker_url = redis_url
 cel_app.conf.result_backend = redis_url
-cel_app.conf.result_backend_transport_options = {
-    'retry_policy': {
-       'timeout': 5.0
-    }
-}
+cel_app.conf.result_backend_transport_options = {"retry_policy": {"timeout": 5.0}}
 
 # Load settings from Django settings file (use a CELERY_ prefix)
 cel_app.config_from_object("django.conf.settings")
@@ -52,8 +50,10 @@ cel_app.autodiscover_tasks()
 # #        'schedule': crontab(minute=0, hour=6, day_of_month=10),
 # #    },
 # }
-cel_app.conf.timezone = 'Asia/Dhaka'
+cel_app.conf.timezone = "Asia/Dhaka"
+
 
 @cel_app.task(bind=True)
 def debug_task(self):
+    """debug celery task"""
     print(f"Request: {self.request!r}")

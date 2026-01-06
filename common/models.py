@@ -8,6 +8,8 @@ from common.choices import Status
 
 
 class BaseModelWithUID(models.Model):
+    """Abstract base model with uuid"""
+
     uid = models.UUIDField(
         default=uuid.uuid4,
         editable=False,
@@ -38,6 +40,8 @@ class BaseModelWithUID(models.Model):
 
 
 class NameDescriptionBaseModel(BaseModelWithUID):
+    """Abstract base model with name description and uuid"""
+
     name = models.CharField(
         max_length=255,
         db_index=True,

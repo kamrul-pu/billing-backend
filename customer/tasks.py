@@ -5,7 +5,7 @@ from core.choices import BillingCycle
 from core.models import Organization
 from common.helpers import SMS
 from customer.models import Customer, Payment
-from customer.utils import toggle_ppp_user, month_name_to_bangla
+from customer.utils import month_name_to_bangla
 from customer.helpers import Mikrotik
 
 
@@ -104,7 +104,9 @@ def deactivate_due_payment_customers(org_id: int = 1):
     payments = (
         Payment()
         .get_all_actives()
-        .filter(billing_month=month, billing_year=year, paid=False, organization_id=org_id)
+        .filter(
+            billing_month=month, billing_year=year, paid=False, organization_id=org_id
+        )
         .select_related("customer")
     )
     organization_name = organization.name or "M_Online"

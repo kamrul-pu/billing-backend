@@ -1,15 +1,11 @@
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
-from rest_framework.permissions import SAFE_METHODS
 
 from core.permissions import (
     IsAdminUser,
-    IsAuthenticated,
-    IsAdminUserOrReadOnly,
     IsManager,
     IsStaff,
-    AllowAny,
 )
 from customer.models import Payment
 from customer.serializers.payment import (
@@ -38,7 +34,7 @@ class PaymentsList(ListCreateAPIView):
             .filter(organization_id=self.request.user.organization_id)
             .select_related("customer", "entry_by")
         )
-        
+
         # Text search filters
         # Individual filters
         paid = self.request.query_params.get("paid", None)

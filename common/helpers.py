@@ -1,3 +1,6 @@
+"""Primary key extractor of a queryset"""
+
+
 def pk_extractor(queryset):
     """
     this method return  pk of every item of a queryset as list

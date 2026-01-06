@@ -6,7 +6,7 @@ from customer.views.customer import (
     CustomerPaymentsList,
     GenerateBill,
     StatusToggle,
-    TestCeleryTask
+    TestCeleryTask,
 )
 
 

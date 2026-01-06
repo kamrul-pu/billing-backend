@@ -1,3 +1,5 @@
+"""Management command to fix bill amount"""
+
 from django.core.management.base import BaseCommand
 from customer.models import Customer
 from django.db import transaction
@@ -7,6 +9,7 @@ class Command(BaseCommand):
     help = "Fix payment bill amount based on customer package price"
 
     def handle(self, *args, **kwargs):
+        """Entrypoint for the command."""
         with transaction.atomic():
             customers = (
                 Customer.objects.filter()

@@ -1,3 +1,5 @@
+"""Helper class to communicate with Mikrotik Router."""
+
 import requests
 from django.conf import settings
 
@@ -45,6 +47,7 @@ class Mikrotik:
                 verify=False,
                 # verify=MIKROTIK_VERIFY_SSL,
                 # timeout=REQUEST_TIMEOUT,
+                timeout=60,
             )
 
             if response.status_code != 200:
@@ -76,7 +79,7 @@ class Mikrotik:
             or not organization.router_password
         ):
             print("Router configuration is not added yet")
-            return False, f"Router configuration is not added yet"
+            return False, "Router configuration is not added yet"
         try:
             url = f"{organization.router_ip}/rest/ppp/secret"
             response = requests.get(
@@ -85,6 +88,7 @@ class Mikrotik:
                 # verify=MIKROTIK_VERIFY_SSL,
                 # timeout=REQUEST_TIMEOUT,
                 verify=False,
+                timeout=60,
             )
 
             if response.status_code == 200:
@@ -120,6 +124,7 @@ class Mikrotik:
                 # verify=MIKROTIK_VERIFY_SSL,
                 # timeout=REQUEST_TIMEOUT,
                 verify=False,
+                timeout=60,
             )
             # print("RRRRR: ", response)
             if response.status_code == 200:
@@ -158,6 +163,7 @@ class Mikrotik:
                 # verify=MIKROTIK_VERIFY_SSL,
                 # timeout=REQUEST_TIMEOUT,
                 verify=False,
+                timeout=60,
             )
 
             if response.status_code in [200, 204]:
@@ -210,6 +216,7 @@ class Mikrotik:
                 # verify=MIKROTIK_VERIFY_SSL,
                 # timeout=REQUEST_TIMEOUT,
                 verify=False,
+                timeout=60,
             )
 
             if response.status_code != 200:
@@ -257,6 +264,12 @@ class Mikrotik:
 
     @staticmethod
     def create_ppp_user(user, organization=None):
+        """
+        Docstring for create_ppp_user
+
+        :param user: Description
+        :param organization: Description
+        """
         if (
             not organization
             or not organization.router_ip
@@ -289,6 +302,7 @@ class Mikrotik:
                 verify=False,
                 # verify=MIKROTIK_VERIFY_SSL,
                 # timeout=REQUEST_TIMEOUT,
+                timeout=60,
             )
             # print("RRRRR: ", response)
             if response.status_code == 201:
@@ -327,7 +341,7 @@ class Mikrotik:
             or not organization.router_password
         ):
             print("Router configuration is not added yet")
-            return False, f"Router configuration is not added yet"
+            return False, "Router configuration is not added yet"
 
         success, user = Mikrotik.get_user_by_username(username, organization)
         if not success:
@@ -341,6 +355,7 @@ class Mikrotik:
                 verify=False,
                 # verify=MIKROTIK_VERIFY_SSL,
                 # timeout=REQUEST_TIMEOUT,
+                timeout=60,
             )
             if response.status_code != 204:
                 return False, f"Failed to delete user: {response.text}"

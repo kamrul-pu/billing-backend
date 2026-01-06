@@ -4,7 +4,6 @@ from rest_framework.permissions import SAFE_METHODS
 from rest_framework.response import Response
 from rest_framework import status
 from core.permissions import (
-    IsSuperAdminOrReadOnly,
     IsAuthenticated,
     IsAdminUser,
     IsManager,

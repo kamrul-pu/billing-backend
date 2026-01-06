@@ -8,7 +8,6 @@ from django.contrib import admin
 from django.urls import path, re_path, include
 from django.http import JsonResponse
 
-from rest_framework import permissions
 
 from customer.views.customer import Dashboard
 

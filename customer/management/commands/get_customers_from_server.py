@@ -1,5 +1,7 @@
+"""Management script to get users from the server"""
+
 from django.core.management.base import BaseCommand
-from customer.models import Customer, Package, Payment
+from customer.models import Customer, Package
 from core.models import Organization
 from django.db import transaction
 
@@ -13,11 +15,18 @@ MIKROTIK_PASS = settings.MIKROTIK_PASS
 
 
 def get_users_from_server(organization: Organization):
+    """
+    Docstring for get_users_from_server
+
+    :param organization: Description
+    :type organization: Organization
+    """
     try:
         response = requests.get(
             f"{organization.router_ip}/rest/ppp/secret",
             auth=(organization.router_username, organization.router_password),
             verify=False,  # Use CA in production
+            timeout=60,
         )
         if response.status_code != 200:
             print("Failed to fetch users from server: ", response.status_code)
@@ -41,9 +50,20 @@ PACKAGE_DETAIL = {
 
 
 class Command(BaseCommand):
+    """
+    Docstring for Command
+    """
+
     help = "Get customer data from server and update local database"
 
     def handle(self, *args, **kwargs):
+        """
+        Docstring for handle
+
+        :param self: Description
+        :param args: Description
+        :param kwargs: Description
+        """
         organization_id = input(
             "Enter the organization ID to associate with the imported customers: "
         )

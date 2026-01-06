@@ -1,24 +1,23 @@
+"""Package related views"""
+
 from rest_framework.generics import (
     ListAPIView,
     ListCreateAPIView,
     RetrieveUpdateDestroyAPIView,
 )
-from rest_framework.response import Response
+
 from rest_framework.permissions import SAFE_METHODS
 
 from customer.models import Package, Customer
 from customer.serializers.package import (
     PackageListSerializer,
     PackageDetailSerializer,
-    PackageCustomerSerializer,
 )
 
 from customer.serializers.customer import CustomerListSerializer
 from core.permissions import (
     AllowAny,
-    IsAuthenticated,
     IsAdminUser,
-    IsAdminUserOrReadOnly,
     IsManager,
     IsStaff,
 )

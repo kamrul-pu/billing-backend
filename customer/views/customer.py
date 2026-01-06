@@ -4,7 +4,6 @@ from django.db.models import Q, Count, Sum
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.generics import (
-    ListAPIView,
     ListCreateAPIView,
     RetrieveUpdateDestroyAPIView,
 )
@@ -17,7 +16,6 @@ from core.choices import BillingCycle
 from core.permissions import (
     IsAdminUser,
     IsAuthenticated,
-    IsAdminUserOrReadOnly,
     IsManager,
     IsStaff,
     AllowAny,
@@ -203,7 +201,9 @@ class GenerateBill(APIView):
 
         # Step 2: Get customer IDs with existing payments for current month and year
         existing_payments = Payment.objects.filter(
-            billing_month=month, billing_year=year, organization_id=request.user.organization_id
+            billing_month=month,
+            billing_year=year,
+            organization_id=request.user.organization_id,
         )
         paid_customer_ids = set(existing_payments.values_list("customer_id", flat=True))
 
