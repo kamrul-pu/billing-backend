@@ -1,11 +1,16 @@
+from collections import defaultdict
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.views import APIView
 
 from core.permissions import (
     IsAdminUser,
     IsManager,
     IsStaff,
+    IsAuthenticated
 )
 from customer.models import Payment
 from customer.serializers.payment import (
@@ -102,3 +107,51 @@ class PaymentDetail(RetrieveUpdateDestroyAPIView):
         )
 
         return queryset
+
+
+class MonthlyCollectionList(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request, format=None):
+        if not request.user.organization_id:
+            return Response({"detail": "Organization not found."}, status=404)
+
+        now = timezone.now()
+        first_day_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+        monthly_payments = (
+            Payment.objects.filter(
+                organization_id=request.user.organization_id,
+                payment_date__gte=first_day_of_month,
+                paid=True,
+            )
+            .select_related("customer", "entry_by")
+        )
+
+        # Group payments by collecting user
+        collections_by_user = defaultdict(lambda: {'payments': [], 'total_amount': 0})
+
+        for payment in monthly_payments:
+            user_key = (payment.entry_by.id, payment.entry_by.first_name, payment.entry_by.last_name)
+            collections_by_user[user_key]['payments'].append({
+                'customer_name': payment.customer.name,
+                'customer_phone': payment.customer.phone,
+                'customer_address': payment.customer.address,
+                "bill_amount": payment.bill_amount,
+                'amount': payment.amount,
+                'payment_date': payment.payment_date.date(),
+            })
+            collections_by_user[user_key]['total_amount'] += payment.amount
+
+        # Format the response
+        result = []
+        for (user_id, first_name, last_name), data in collections_by_user.items():
+            result.append({
+                'user_id': user_id,
+                'first_name': first_name,
+                'last_name': last_name,
+                'total_payments': len(data['payments']),
+                'total_amount': data['total_amount'],
+                'payments': data['payments']
+            })
+
+        return Response({"results": result, "message": "Monthly collections retrieved successfully"}, status=status.HTTP_200_OK)

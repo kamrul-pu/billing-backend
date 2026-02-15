@@ -68,6 +68,9 @@ MIKROTIK_URL = os.environ.get("MIKROTIK_URL", "")  # Use http:// or https://
 MIKROTIK_USER = os.environ.get("MIKROTIK_USER", "")
 MIKROTIK_PASS = os.environ.get("MIKROTIK_PASS", "")
 
+SMS_URL: str = os.environ.get("SMS_URL", "https://bulksmsbd.net/api")
+SMS_API_KEY: str = os.environ.get("SMS_API_KEY", "")
+SMS_SENDER_ID: str = os.environ.get("SMS_SENDER_ID", "")
 # Application definition
 
 DJANGO_APPS = [
@@ -256,7 +259,6 @@ REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "EXCEPTION_HANDLER": "core.exceptions.custom_exception_handler",
 }
-# import app.jwt_schema_extension
 
 if ENABLE_DOC:
     REST_FRAMEWORK["DEFAULT_SCHEMA_CLASS"] = "drf_spectacular.openapi.AutoSchema"
@@ -278,6 +280,8 @@ if ENABLE_DOC:
         },
         "SECURITY": [{"BearerAuth": []}],
     }
+
+    import app.jwt_schema_extension
 
 # # Cors Allowed Origins
 # CORS_ALLOWED_ORIGINS = os.environ.get(

@@ -6,10 +6,11 @@ import json
 
 import requests
 
+from django.conf import settings
 
-SMS_URL: str = "http://bulksmsbd.net/api"
-SMS_API_KEY: str = "REaJMMMxbc00PNs9N9xH"
-SMS_SENDER_ID: str = "8809617629227"  # Replace with your sender ID
+SMS_URL: str = settings.SMS_URL
+SMS_API_KEY: str = settings.SMS_API_KEY
+SMS_SENDER_ID: str = settings.SMS_SENDER_ID
 
 
 class SMS:
