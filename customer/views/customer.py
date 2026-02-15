@@ -262,6 +262,7 @@ class Dashboard(APIView):
     def get(self, request, *args, **kwargs):
         now = timezone.now()
         current_month = now.strftime("%B").upper()  # e.g., "April"
+        first_day_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         # thirty_days_ago = now - timezone.timedelta(days=30)
 
         # === 1. Aggregated Stats ===
@@ -288,6 +289,9 @@ class Dashboard(APIView):
             current_month_pending_amount=Sum(
                 "bill_amount", filter=Q(paid=False, billing_month=current_month)
             ),
+            current_month_collection=Sum(
+                "amount", filter=Q(paid=True, payment_date__gte=first_day_of_month)
+            )
         )
 
         # === 2. Recent Data ===
@@ -315,6 +319,7 @@ class Dashboard(APIView):
                 "current_month_payments": payment_stats["current_month_count"],
                 "current_month_paid_amount": f"{payment_stats['current_month_paid_amount'] or 0.0:.2f}",
                 "current_month_pending_amount": f"{payment_stats['current_month_pending_amount'] or 0.0:.2f}",
+                "current_month_collection": f"{payment_stats['current_month_collection'] or 0.0:.2f}"
                 # "recent_customers": CustomerListSerializer(
                 #     recent_customers, many=True
                 # ).data,
