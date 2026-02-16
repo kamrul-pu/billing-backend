@@ -5,7 +5,9 @@ from django.contrib.auth.base_user import (
 )
 from django.contrib.auth.models import AbstractBaseUser
 from django.db import models
-
+from cryptography.fernet import Fernet
+import base64
+import hashlib
 
 from common.models import BaseModelWithUID, NameDescriptionBaseModel
 
@@ -17,7 +19,7 @@ from core.choices import (
     OTPType,
     BillingCycle,
 )
-from core.utils import get_user_media_path_prefix
+# from core.utils import get_user_media_path_prefix
 
 
 class Subscription(NameDescriptionBaseModel):
@@ -58,12 +60,12 @@ class Organization(NameDescriptionBaseModel):
         choices=SubscriptionStatus.choices,
         default=SubscriptionStatus.PENDING,
     )
-    # Mikrotik credentials
-    router_ip = models.CharField(max_length=64, blank=True)
-    router_username = models.CharField(max_length=150, blank=True)
-    router_password = models.CharField(max_length=128, blank=True)
+    # Mikrotik credentials (stored encrypted)
+    router_ip = models.CharField(max_length=256, blank=True)
+    router_username = models.CharField(max_length=256, blank=True)
+    router_password = models.CharField(max_length=256, blank=True)
     router_port = models.IntegerField(default=8728, blank=True)
-    router_secret = models.CharField(max_length=150, blank=True)
+    router_secret = models.CharField(max_length=256, blank=True)
     router_ssl = models.BooleanField(
         default=False, help_text="Use SSL for Mikrotik connection"
     )
@@ -82,6 +84,92 @@ class Organization(NameDescriptionBaseModel):
     )
     sms_feature = models.BooleanField(default=False)
     email_feature = models.BooleanField(default=False)
+
+    @staticmethod
+    def _get_cipher_suite():
+        """Generate Fernet cipher suite from Django's SECRET_KEY."""
+        from django.conf import settings
+        
+        secret_key = settings.SECRET_KEY
+        derived_key = hashlib.sha256(secret_key.encode()).digest()
+        encoded_key = base64.urlsafe_b64encode(derived_key)
+        return Fernet(encoded_key)
+    
+    def _encrypt_value(self, value):
+        """Encrypt a string value."""
+        if not value or value == "":
+            return value
+        try:
+            cipher_suite = self._get_cipher_suite()
+            if isinstance(value, str):
+                value = value.encode()
+            encrypted_value = cipher_suite.encrypt(value)
+            return encrypted_value.decode()
+        except Exception:
+            return value
+    
+    def _decrypt_value(self, value):
+        """Decrypt a string value."""
+        if not value or value == "":
+            return value
+        try:
+            cipher_suite = self._get_cipher_suite()
+            if isinstance(value, str):
+                value = value.encode()
+            decrypted_value = cipher_suite.decrypt(value)
+            return decrypted_value.decode()
+        except Exception:
+            # If decryption fails, assume it's already plain text
+            if isinstance(value, bytes):
+                return value.decode()
+            return value
+    
+    def save(self, *args, **kwargs):
+        """Encrypt router credentials before saving to database."""
+        # Encrypt credentials if they're not already encrypted
+        if self.router_ip:
+            try:
+                # Try to decrypt - if it fails, it's plain text
+                self._decrypt_value(self.router_ip)
+            except Exception:
+                # If decryption fails, encrypt it
+                self.router_ip = self._encrypt_value(self.router_ip)
+        
+        if self.router_username:
+            try:
+                self._decrypt_value(self.router_username)
+            except Exception:
+                self.router_username = self._encrypt_value(self.router_username)
+        
+        if self.router_password:
+            try:
+                self._decrypt_value(self.router_password)
+            except Exception:
+                self.router_password = self._encrypt_value(self.router_password)
+        
+        if self.router_secret:
+            try:
+                self._decrypt_value(self.router_secret)
+            except Exception:
+                self.router_secret = self._encrypt_value(self.router_secret)
+        
+        super().save(*args, **kwargs)
+    
+    def get_router_ip(self):
+        """Get decrypted router IP."""
+        return self._decrypt_value(self.router_ip)
+    
+    def get_router_username(self):
+        """Get decrypted router username."""
+        return self._decrypt_value(self.router_username)
+    
+    def get_router_password(self):
+        """Get decrypted router password."""
+        return self._decrypt_value(self.router_password)
+    
+    def get_router_secret(self):
+        """Get decrypted router secret."""
+        return self._decrypt_value(self.router_secret)
 
     def __str__(self):
         return self.name

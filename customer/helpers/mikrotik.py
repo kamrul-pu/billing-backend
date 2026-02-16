@@ -33,17 +33,22 @@ class Mikrotik:
             or not organization.router_password
         ):
             print("Router configuration is not added yet")
-            return False, f"Router configuration is not added yet"
+            return False, "Router configuration is not added yet"
 
         if not username:
             return False, "Username is required"
 
         try:
-            query_url = f"{organization.router_ip}/rest/ppp/secret/print"
+            # Get decrypted credentials
+            router_ip = organization.get_router_ip()
+            router_user = organization.get_router_username()
+            router_pass = organization.get_router_password()
+            
+            query_url = f"{router_ip}/rest/ppp/secret/print"
             response = requests.post(
                 query_url,
                 json={".query": [f"name={username}"]},
-                auth=(organization.router_username, organization.router_password),
+                auth=(router_user, router_pass),
                 verify=False,
                 # verify=MIKROTIK_VERIFY_SSL,
                 # timeout=REQUEST_TIMEOUT,
@@ -81,10 +86,15 @@ class Mikrotik:
             print("Router configuration is not added yet")
             return False, "Router configuration is not added yet"
         try:
-            url = f"{organization.router_ip}/rest/ppp/secret"
+            # Get decrypted credentials
+            router_ip = organization.get_router_ip()
+            router_user = organization.get_router_username()
+            router_pass = organization.get_router_password()
+            
+            url = f"{router_ip}/rest/ppp/secret"
             response = requests.get(
                 url,
-                auth=(organization.router_username, organization.router_password),
+                auth=(router_user, router_pass),
                 # verify=MIKROTIK_VERIFY_SSL,
                 # timeout=REQUEST_TIMEOUT,
                 verify=False,
@@ -117,10 +127,15 @@ class Mikrotik:
             print("Router configuration is not added yet")
             return False, []
         try:
-            url = f"{organization.router_ip}/rest/ppp/active"
+            # Get decrypted credentials
+            router_ip = organization.get_router_ip()
+            router_user = organization.get_router_username()
+            router_pass = organization.get_router_password()
+            
+            url = f"{router_ip}/rest/ppp/active"
             response = requests.get(
                 url,
-                auth=(organization.router_username, organization.router_password),
+                auth=(router_user, router_pass),
                 # verify=MIKROTIK_VERIFY_SSL,
                 # timeout=REQUEST_TIMEOUT,
                 verify=False,
@@ -156,10 +171,15 @@ class Mikrotik:
             print("Router configuration is not added yet")
             return False
         try:
-            url = f"{organization.router_ip}/rest/ppp/active/{session_id}"
+            # Get decrypted credentials
+            router_ip = organization.get_router_ip()
+            router_user = organization.get_router_username()
+            router_pass = organization.get_router_password()
+            
+            url = f"{router_ip}/rest/ppp/active/{session_id}"
             response = requests.delete(
                 url,
-                auth=(organization.router_username, organization.router_password),
+                auth=(router_user, router_pass),
                 # verify=MIKROTIK_VERIFY_SSL,
                 # timeout=REQUEST_TIMEOUT,
                 verify=False,
@@ -196,7 +216,7 @@ class Mikrotik:
             or not organization.router_password
         ):
             print("Router configuration is not added yet")
-            return False, f"Router configuration is not added yet"
+            return False, "Router configuration is not added yet"
 
         try:
             # Step 1: Get user
@@ -208,11 +228,16 @@ class Mikrotik:
             disabled_str = "true" if disable else "false"
 
             # Step 2: Update disabled status
-            patch_url = f"{organization.router_ip}/rest/ppp/secret/{secret_id}"
+            # Get decrypted credentials
+            router_ip = organization.get_router_ip()
+            router_user = organization.get_router_username()
+            router_pass = organization.get_router_password()
+            
+            patch_url = f"{router_ip}/rest/ppp/secret/{secret_id}"
             response = requests.patch(
                 patch_url,
                 json={"disabled": disabled_str},
-                auth=(organization.router_username, organization.router_password),
+                auth=(router_user, router_pass),
                 # verify=MIKROTIK_VERIFY_SSL,
                 # timeout=REQUEST_TIMEOUT,
                 verify=False,
@@ -222,7 +247,7 @@ class Mikrotik:
             if response.status_code != 200:
                 try:
                     error_msg = response.json().get("message", response.text)
-                except:
+                except Exception as _:
                     error_msg = response.text
                 return False, f"Update failed: {error_msg}"
 
@@ -277,7 +302,7 @@ class Mikrotik:
             or not organization.router_password
         ):
             print("Router configuration is not added yet")
-            return False, f"Router configuration is not added yet"
+            return False, "Router configuration is not added yet"
 
         username = user.get("username", "")
         password = user.get("password", "")
@@ -294,11 +319,16 @@ class Mikrotik:
         }
         # print("Payload to create PPP user: ", payload)
         try:
-            url = f"{organization.router_ip}/rest/ppp/secret"
+            # Get decrypted credentials
+            router_ip = organization.get_router_ip()
+            router_user = organization.get_router_username()
+            router_pass = organization.get_router_password()
+            
+            url = f"{router_ip}/rest/ppp/secret"
             response = requests.put(  # MikroTik uses PUT to CREATE
                 url,
                 json=payload,
-                auth=(organization.router_username, organization.router_password),
+                auth=(router_user, router_pass),
                 verify=False,
                 # verify=MIKROTIK_VERIFY_SSL,
                 # timeout=REQUEST_TIMEOUT,
@@ -316,7 +346,7 @@ class Mikrotik:
                         f"{response.get('detail', 'Failed to create user')}",
                     )
 
-                except:
+                except Exception as _:
                     # print("Response Text: ", response.text)
                     return False, f"Create failed: {response.text}"
 
@@ -348,10 +378,15 @@ class Mikrotik:
             return False, f"User not found: {user}"
 
         try:
-            url = f"{organization.router_ip}/rest/ppp/secret/{user['.id']}"
+            # Get decrypted credentials
+            router_ip = organization.get_router_ip()
+            router_user = organization.get_router_username()
+            router_pass = organization.get_router_password()
+            
+            url = f"{router_ip}/rest/ppp/secret/{user['.id']}"
             response = requests.delete(
                 url,
-                auth=(organization.router_username, organization.router_password),
+                auth=(router_user, router_pass),
                 verify=False,
                 # verify=MIKROTIK_VERIFY_SSL,
                 # timeout=REQUEST_TIMEOUT,
