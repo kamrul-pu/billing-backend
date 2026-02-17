@@ -108,7 +108,7 @@ class Organization(NameDescriptionBaseModel):
         except Exception:
             return value
     
-    def _decrypt_value(self, value):
+    def _decrypt_value(self, value, strict=False):
         """Decrypt a string value."""
         if not value or value == "":
             return value
@@ -118,40 +118,38 @@ class Organization(NameDescriptionBaseModel):
                 value = value.encode()
             decrypted_value = cipher_suite.decrypt(value)
             return decrypted_value.decode()
-        except Exception:
+        except Exception as e:
+            if strict:
+                raise e
             # If decryption fails, assume it's already plain text
             if isinstance(value, bytes):
                 return value.decode()
             return value
     
+    def _is_encrypted(self, value):
+        """Check if a value is already encrypted."""
+        if not value:
+            return True # Nothing to encrypt
+        try:
+            self._decrypt_value(value, strict=True)
+            return True
+        except Exception:
+            return False
+
     def save(self, *args, **kwargs):
         """Encrypt router credentials before saving to database."""
         # Encrypt credentials if they're not already encrypted
-        if self.router_ip:
-            try:
-                # Try to decrypt - if it fails, it's plain text
-                self._decrypt_value(self.router_ip)
-            except Exception:
-                # If decryption fails, encrypt it
-                self.router_ip = self._encrypt_value(self.router_ip)
+        if self.router_ip and not self._is_encrypted(self.router_ip):
+            self.router_ip = self._encrypt_value(self.router_ip)
         
-        if self.router_username:
-            try:
-                self._decrypt_value(self.router_username)
-            except Exception:
-                self.router_username = self._encrypt_value(self.router_username)
+        if self.router_username and not self._is_encrypted(self.router_username):
+            self.router_username = self._encrypt_value(self.router_username)
         
-        if self.router_password:
-            try:
-                self._decrypt_value(self.router_password)
-            except Exception:
-                self.router_password = self._encrypt_value(self.router_password)
+        if self.router_password and not self._is_encrypted(self.router_password):
+            self.router_password = self._encrypt_value(self.router_password)
         
-        if self.router_secret:
-            try:
-                self._decrypt_value(self.router_secret)
-            except Exception:
-                self.router_secret = self._encrypt_value(self.router_secret)
+        if self.router_secret and not self._is_encrypted(self.router_secret):
+            self.router_secret = self._encrypt_value(self.router_secret)
         
         super().save(*args, **kwargs)
     
