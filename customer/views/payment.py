@@ -115,15 +115,53 @@ class MonthlyCollectionList(APIView):
         if not request.user.organization_id:
             return Response({"detail": "Organization not found."}, status=404)
 
+        # Get query parameters
+        user_id = request.query_params.get("user_id", None)
+        start_date = request.query_params.get("start_date", None)
+        end_date = request.query_params.get("end_date", None)
+
         now = timezone.now()
-        first_day_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        
+        # Determine date range
+        if start_date:
+            try:
+                # Support both YYYY-MM-DD and full ISO format
+                if len(start_date) > 10:
+                    start_date = timezone.datetime.fromisoformat(start_date).date()
+                else:
+                    start_date = timezone.datetime.strptime(start_date, "%Y-%m-%d").date()
+            except (ValueError, TypeError):
+                start_date = now.date().replace(day=1)
+        else:
+            start_date = now.date().replace(day=1)
+
+        if end_date:
+            try:
+                if len(end_date) > 10:
+                    end_date = timezone.datetime.fromisoformat(end_date).date()
+                else:
+                    end_date = timezone.datetime.strptime(end_date, "%Y-%m-%d").date()
+            except (ValueError, TypeError):
+                end_date = now.date()
+        else:
+            end_date = now.date()
+
+        # Base filter - Using __date lookup to filter strictly on the date portion
+        filters = Q(
+            organization_id=request.user.organization_id,
+            payment_date__date__range=(start_date, end_date),
+            paid=True,
+        )
+
+        # Optional user filter
+        if user_id:
+            try:
+                filters &= Q(entry_by_id=int(user_id))
+            except (ValueError, TypeError):
+                pass
 
         monthly_payments = (
-            Payment.objects.filter(
-                organization_id=request.user.organization_id,
-                payment_date__gte=first_day_of_month,
-                paid=True,
-            )
+            Payment.objects.filter(filters)
             .select_related("customer", "entry_by")
         )
 
