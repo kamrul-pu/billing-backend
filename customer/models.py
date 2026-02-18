@@ -7,7 +7,7 @@ from django.utils import timezone
 
 # from customer.utils import toggle_ppp_user
 from customer.helpers import Mikrotik
-from common.models import NameDescriptionBaseModel, BaseModelWithUID
+from common.models import NameDescriptionBaseModel
 from customer.choices import ConnectionType, PaymentMethod, Months
 
 

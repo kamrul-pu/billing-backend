@@ -7,7 +7,7 @@ from rest_framework.generics import (
     ListCreateAPIView,
     RetrieveUpdateDestroyAPIView,
 )
-from rest_framework.permissions import SAFE_METHODS
+from rest_framework.permissions import SAFE_METHODS, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
 
@@ -23,11 +23,12 @@ from core.permissions import (
 from common.helpers import SMS
 from customer.models import Customer, Payment, Package
 from customer.serializers.customer import (
+    CustomerBase,
     CustomerListSerializer,
     CustomerDetailSerializer,
     StatusToggleSerializer,
 )
-from customer.serializers.payment import PaymentListSerializer
+from customer.serializers.payment import PaymentListSerializer, PaymentLiteSerializer
 
 # from customer.utils import toggle_ppp_user
 from customer.helpers import Mikrotik
@@ -369,6 +370,46 @@ class StatusToggle(APIView):
         customer.save(update_fields=["is_active"])
 
         return Response({"message": "User Status Updated"}, status=status.HTTP_200_OK)
+
+
+class CustomerDuePaymentList(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    def get(self, request, *args, **kwargs):
+        phone= request.query_params.get("phone", None)
+        username = request.query_params.get("username", None)
+        if not phone and not username:
+            return Response(
+                {"error": "Phone number or username is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if phone:
+            customer = (
+                Customer.objects.filter(phone=phone)
+                .select_related("organization")
+                .first()
+            )
+        elif username:
+            customer = (
+                Customer.objects.filter(username=username)
+                .select_related("organization")
+                .first()
+            )
+        if not customer:
+            return Response(
+                {"error": "Customer not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        total_due = Payment.objects.filter(customer=customer, paid=False).aggregate(
+            total_due=Sum("bill_amount")
+        )["total_due"] or 0.0
+        payments = PaymentLiteSerializer(
+            Payment.objects.filter(customer=customer, paid=False),
+            many=True,
+        )
+        return Response(
+            {"message": "Payments retrieved successfully", "customer": CustomerBase(customer).data, "payments": payments.data, "total_due": total_due},
+            status=status.HTTP_200_OK,
+        )
 
 
 class TestCeleryTask(APIView):

@@ -39,6 +39,16 @@ class PaymentBase(serializers.ModelSerializer):
         read_only_fields = ("id", "created_at", "updated_at")
 
 
+class PaymentLiteSerializer(PaymentBase):
+    class Meta(PaymentBase.Meta):
+        fields = ("id", "uid", "amount", "billing_month", "billing_year", "paid")
+        read_only_fields = PaymentBase.Meta.read_only_fields + (
+            "amount",
+            "billing_month",
+            "billing_year",
+            "paid",
+        )
+
 class PaymentListSerializer(PaymentBase):
     customer = CustomerBase(read_only=True)
     customer_id = serializers.IntegerField(write_only=True, required=True)

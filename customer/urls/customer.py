@@ -7,6 +7,7 @@ from customer.views.customer import (
     GenerateBill,
     StatusToggle,
     TestCeleryTask,
+    CustomerDuePaymentList,
 )
 
 
@@ -17,4 +18,5 @@ urlpatterns = [
     path("/bills/generate", GenerateBill.as_view(), name="generate-bill"),
     path("/status/toggle", StatusToggle.as_view(), name="toggle-status"),
     path("/test/celery", TestCeleryTask.as_view(), name="test-celery"),
+    path("/payments/dues", CustomerDuePaymentList.as_view(), name="customer-payment-list"),
 ]
