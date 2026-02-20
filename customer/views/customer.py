@@ -20,6 +20,7 @@ from core.permissions import (
     IsStaff,
     AllowAny,
 )
+from core.serializers.organization import OrganizationLiteSerializer
 from common.helpers import SMS
 from customer.models import Customer, Payment, Package
 from customer.serializers.customer import (
@@ -263,7 +264,9 @@ class Dashboard(APIView):
     def get(self, request, *args, **kwargs):
         now = timezone.now()
         current_month = now.strftime("%B").upper()  # e.g., "April"
-        first_day_of_month = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        first_day_of_month = now.replace(
+            day=1, hour=0, minute=0, second=0, microsecond=0
+        )
         # thirty_days_ago = now - timezone.timedelta(days=30)
 
         # === 1. Aggregated Stats ===
@@ -292,7 +295,7 @@ class Dashboard(APIView):
             ),
             current_month_collection=Sum(
                 "amount", filter=Q(paid=True, payment_date__gte=first_day_of_month)
-            )
+            ),
         )
 
         # === 2. Recent Data ===
@@ -320,7 +323,7 @@ class Dashboard(APIView):
                 "current_month_payments": payment_stats["current_month_count"],
                 "current_month_paid_amount": f"{payment_stats['current_month_paid_amount'] or 0.0:.2f}",
                 "current_month_pending_amount": f"{payment_stats['current_month_pending_amount'] or 0.0:.2f}",
-                "current_month_collection": f"{payment_stats['current_month_collection'] or 0.0:.2f}"
+                "current_month_collection": f"{payment_stats['current_month_collection'] or 0.0:.2f}",
                 # "recent_customers": CustomerListSerializer(
                 #     recent_customers, many=True
                 # ).data,
@@ -374,8 +377,9 @@ class StatusToggle(APIView):
 
 class CustomerDuePaymentList(APIView):
     permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get(self, request, *args, **kwargs):
-        phone= request.query_params.get("phone", None)
+        phone = request.query_params.get("phone", None)
         username = request.query_params.get("username", None)
         if not phone and not username:
             return Response(
@@ -399,15 +403,24 @@ class CustomerDuePaymentList(APIView):
                 {"error": "Customer not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        total_due = Payment.objects.filter(customer=customer, paid=False).aggregate(
-            total_due=Sum("bill_amount")
-        )["total_due"] or 0.0
+        total_due = (
+            Payment.objects.filter(customer=customer, paid=False).aggregate(
+                total_due=Sum("bill_amount")
+            )["total_due"]
+            or 0.0
+        )
         payments = PaymentLiteSerializer(
             Payment.objects.filter(customer=customer, paid=False),
             many=True,
         )
         return Response(
-            {"message": "Payments retrieved successfully", "customer": CustomerBase(customer).data, "payments": payments.data, "total_due": total_due},
+            {
+                "message": "Payments retrieved successfully",
+                "customer": CustomerBase(customer).data,
+                "organization": OrganizationLiteSerializer(customer.organization).data,
+                "payments": payments.data,
+                "total_due": total_due,
+            },
             status=status.HTTP_200_OK,
         )
 
