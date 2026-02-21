@@ -30,12 +30,12 @@ class BaseModelWithUID(models.Model):
 
     def get_all_actives(self):
         return self.__class__.objects.filter(status=Status.ACTIVE).order_by(
-            "-created_at"
+            "-pk"
         )
 
     def get_all_non_inactives(self):
         return self.__class__.objects.exclude(status=Status.INACTIVE).order_by(
-            "-created_at"
+            "-pk"
         )
 
 

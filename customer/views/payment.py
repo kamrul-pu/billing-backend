@@ -58,9 +58,17 @@ class PaymentsList(ListCreateAPIView):
             .get_all_actives()
             .filter(
                 organization_id=self.request.user.organization_id,
-                payment_date__date__gte=start_date,
-                payment_date__date__lte=end_date,
             )
+            .filter(
+                Q(
+                    payment_date__date__gte=start_date,
+                    payment_date__date__lte=end_date,
+                )
+                | Q(
+                    payment_date__isnull=True,
+                )
+            )
+            .distinct()
             .select_related("customer", "entry_by")
         )
 
