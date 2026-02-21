@@ -68,6 +68,7 @@ class PaymentsList(ListCreateAPIView):
                     payment_date__isnull=True,
                 )
             )
+            .order_by("-payment_date")
             .distinct()
             .select_related("customer", "entry_by")
         )
