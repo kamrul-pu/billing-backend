@@ -115,8 +115,17 @@ def deactivate_due_payment_customers(org_id: int = 1):
 
     success, user_sessions = Mikrotik.get_user_sessions(organization)
     user_to_session_id = {}
-    for session in user_sessions:
-        user_to_session_id[session.get("name", "")] = session.get(".id", "")
+    
+    # Handle both dict and list responses from API
+    sessions_list = []
+    if isinstance(user_sessions, dict):
+        sessions_list = list(user_sessions.values())
+    elif isinstance(user_sessions, list):
+        sessions_list = user_sessions
+    
+    for session in sessions_list:
+        if isinstance(session, dict):
+            user_to_session_id[session.get("name", "")] = session.get(".id", "")
 
     for payment in payments:
         customer = payment.customer
@@ -139,7 +148,7 @@ def deactivate_due_payment_customers(org_id: int = 1):
                     }
                 )
             else:
-                print(f"Error Message: ", msg)
+                print("Error Message: ", msg)
 
     if customers_to_update:
         Customer.objects.bulk_update(customers_to_update, fields=["is_active"])
