@@ -1,3 +1,5 @@
+import logging as log
+
 from celery import shared_task
 from django.utils import timezone
 
@@ -244,3 +246,9 @@ def deactivate_all_organizations_expired_subscription_customers():
             f"Deactivating expired subscription customers for organization: {org.name} (ID: {org.id})"
         )
         deactivate_expired_subscription_customers(org)
+
+
+@shared_task
+def send_single_sms(to, message):
+    log.info("Seding sms to the customer")
+    SMS.send_single_sms(to, message)

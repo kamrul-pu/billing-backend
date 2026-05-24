@@ -6,8 +6,8 @@ import logging
 from django.utils import timezone
 from rest_framework import serializers
 
-from common.helpers import SMS
 from customer.models import Payment, Customer
+from customer.tasks import send_single_sms
 from core.choices import BillingCycle
 from core.serializers.user import UserLiteSerializer
 from customer.serializers.customer import CustomerBase
@@ -229,7 +229,7 @@ class PaymentListSerializer(PaymentBase):
             and is_fully_paid
             and customer.phone
         ):
-            SMS.send_single_sms(to=customer.phone, message=message)
+            send_single_sms.delay(to=customer.phone, message=message)
         return payment
 
 
@@ -261,7 +261,7 @@ class PaymentDetailSerializer(PaymentBase):
             and is_fully_paid
             and instance.customer.phone
         ):
-            SMS.send_single_sms(
+            send_single_sms.delay(
                 to=instance.customer.phone,
                 message=f"আপনার {month_name_to_bangla.get(instance.billing_month, '')} এর বিল {amount} BDT পরিশোধ হয়েছে-{instance.organization.name or 'M_Online'}",
             )
