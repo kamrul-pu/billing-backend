@@ -80,8 +80,8 @@
     // );
 
     const siblings = $this
-      .closest(".related-widget-wrapper")
-      .find(".view-related, .change-related, .delete-related");
+      .parent()
+      .nextAll(".view-related, .change-related, .delete-related");
 
     if (!siblings.length) {
       return;

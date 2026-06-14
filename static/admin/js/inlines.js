@@ -310,7 +310,7 @@
   };
 
   // Tabular inlines ---------------------------------------------------------
-  $.fn.tabularFormset = function (selector, options, callback = null) {
+  $.fn.tabularFormset = function (selector, options) {
     const $rows = $(this);
 
     const reinitDateTimeShortCuts = function () {
@@ -370,15 +370,11 @@
       addButton: options.addButton,
     });
 
-    if (typeof callback === "function") {
-      callback();
-    }
-
     return $rows;
   };
 
   // Stacked inlines ---------------------------------------------------------
-  $.fn.stackedFormset = function (selector, options, callback = null) {
+  $.fn.stackedFormset = function (selector, options) {
     const $rows = $(this);
     const updateInlineLabel = function (row) {
       $(selector)
@@ -453,47 +449,26 @@
       addButton: options.addButton,
     });
 
-    if (typeof callback === "function") {
-      callback();
-    }
-
     return $rows;
   };
 
-  $(window).on("htmx:afterSettle", function (event) {
-    if (event.target.classList.contains("js-inline-admin-formset")) {
-      initInlines($(event.target), function () {
-        if (typeof DateTimeShortcuts !== "undefined") {
-          $(".datetimeshortcuts").remove();
-          DateTimeShortcuts.init();
-        }
-
-        $(event.target).find(".admin-autocomplete").djangoAdminSelect2();
-      });
-    }
-  });
-
   $(document).ready(function () {
     $(".js-inline-admin-formset").each(function () {
-      initInlines(this);
+      const data = $(this).data(),
+        inlineOptions = data.inlineFormset;
+      let selector;
+      switch (data.inlineType) {
+        case "stacked":
+          selector = inlineOptions.name + "-group .inline-related";
+          $(selector).stackedFormset(selector, inlineOptions.options);
+          break;
+        case "tabular":
+          selector =
+            inlineOptions.name +
+            "-group .tabular.inline-related tbody:last > tr.form-row";
+          $(selector).tabularFormset(selector, inlineOptions.options);
+          break;
+      }
     });
   });
-
-  function initInlines(el, callback = null) {
-    const data = $(el).data(),
-      inlineOptions = data.inlineFormset;
-    let selector;
-    switch (data.inlineType) {
-      case "stacked":
-        selector = inlineOptions.name + "-group .inline-related";
-        $(selector).stackedFormset(selector, inlineOptions.options, callback);
-        break;
-      case "tabular":
-        selector =
-          inlineOptions.name +
-          "-group .tabular.inline-related tbody:last > tr.form-row";
-        $(selector).tabularFormset(selector, inlineOptions.options, callback);
-        break;
-    }
-  }
 }
